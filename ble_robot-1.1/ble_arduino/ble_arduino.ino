@@ -1,8 +1,14 @@
-
 #include "BLECStringCharacteristic.h"
 #include "EString.h"
 #include "RobotCommand.h"
 #include <ArduinoBLE.h>
+
+//////////// For Temperature Reading ////////////
+#define RESOLUTION_BITS (16)
+#ifdef ADCPIN
+#define EXTERNAL_ADC_PIN ADCPIN
+#endif
+//////////// For Temperature Reading ////////////
 
 //////////// BLE UUIDs ////////////
 #define BLE_UUID_TEST_SERVICE "c1135480-10fc-47dc-8021-8d6f8c21a39c"
@@ -33,6 +39,10 @@ static long previousMillis = 0;
 unsigned long currentMillis = 0;
 //////////// Global Variables ////////////
 
+long interval5s = 1000;
+static long previousMillis5s = 0;
+unsigned long currentMillis5s = 0;
+
 enum CommandTypes {
   PING,
   SEND_TWO_INTS,
@@ -41,6 +51,7 @@ enum CommandTypes {
   DANCE,
   SET_VEL,
   GET_TIME_MILLIS,
+  GET_TEMP_5s,
 };
 
 void handle_command() {
@@ -149,11 +160,30 @@ void handle_command() {
 
 
     case GET_TIME_MILLIS:
-      char_arr[MAX_MSG_SIZE];
-      itoa(millis(), char_arr, 10);
       tx_estring_value.clear();
       tx_estring_value.append("T:");
-      tx_estring_value.append(char_arr);
+      tx_estring_value.append((int)millis());
+      tx_characteristic_string.writeValue(tx_estring_value.c_str());
+
+      Serial.print("Sent back: ");
+      Serial.println(tx_estring_value.c_str());
+      break;
+
+    case GET_TEMP_5s:
+      tx_estring_value.clear();
+      int count;
+      count = 0;
+      while (count < 5) {
+        tx_estring_value.append("|T:");
+        tx_estring_value.append((int)millis());
+        tx_estring_value.append("|C:");
+        tx_estring_value.append(getTempDegC());
+
+
+
+        count++;
+      }
+
       tx_characteristic_string.writeValue(tx_estring_value.c_str());
 
       Serial.print("Sent back: ");
@@ -175,6 +205,9 @@ void handle_command() {
 
 void setup() {
   Serial.begin(115200);
+
+  analogReadResolution(RESOLUTION_BITS);
+  analogWriteResolution(RESOLUTION_BITS);
 
   BLE.begin();
 
