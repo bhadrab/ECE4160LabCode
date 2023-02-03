@@ -10,6 +10,8 @@
 #endif
 //////////// For Temperature Reading ////////////
 
+//HI
+
 //////////// BLE UUIDs ////////////
 #define BLE_UUID_TEST_SERVICE "c1135480-10fc-47dc-8021-8d6f8c21a39c"
 
