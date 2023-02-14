@@ -39,11 +39,12 @@ float tx_float_value = 0.0;
 long interval = 500;
 static long previousMillis = 0;
 unsigned long currentMillis = 0;
+
+static long prevMillis = 0;
+unsigned long currMillis = 0;
 //////////// Global Variables ////////////
 
-long interval5s = 1000;
-static long previousMillis5s = 0;
-unsigned long currentMillis5s = 0;
+
 
 enum CommandTypes {
   PING,
@@ -54,6 +55,7 @@ enum CommandTypes {
   SET_VEL,
   GET_TIME_MILLIS,
   GET_TEMP_5s,
+  GET_TEMP_5s_RAPID,
 };
 
 void handle_command() {
@@ -169,27 +171,65 @@ void handle_command() {
 
       Serial.print("Sent back: ");
       Serial.println(tx_estring_value.c_str());
+
+      tx_estring_value.clear();
+      tx_estring_value.append("END");
+      tx_characteristic_string.writeValue(tx_estring_value.c_str());
+      Serial.print("Sent back: ");
+      Serial.println(tx_estring_value.c_str());
+
       break;
 
     case GET_TEMP_5s:
-      tx_estring_value.clear();
+      
       int count;
       count = 0;
       while (count < 5) {
-        tx_estring_value.append("|T:");
+        tx_estring_value.clear();
+        tx_estring_value.append("T:");
         tx_estring_value.append((int)millis());
-        tx_estring_value.append("|C:");
+        tx_estring_value.append(" C:");
         tx_estring_value.append(getTempDegC());
-
-
-
+        tx_characteristic_string.writeValue(tx_estring_value.c_str());
+        Serial.print("Sent back: ");
+        Serial.println(tx_estring_value.c_str());
+        if (count != 4)
+          delay(995);
         count++;
       }
 
-      tx_characteristic_string.writeValue(tx_estring_value.c_str());
 
+      tx_estring_value.clear();
+      tx_estring_value.append("END");
+      tx_characteristic_string.writeValue(tx_estring_value.c_str());
       Serial.print("Sent back: ");
       Serial.println(tx_estring_value.c_str());
+      break;
+
+    case GET_TEMP_5s_RAPID:
+
+
+      prevMillis = millis();
+      currMillis = prevMillis;
+
+      while (currMillis - prevMillis <= 5000) {
+        tx_estring_value.clear();
+        tx_estring_value.append("T:");
+        tx_estring_value.append((int)millis());
+        tx_estring_value.append(" C:");
+        tx_estring_value.append(getTempDegC());
+
+        tx_characteristic_string.writeValue(tx_estring_value.c_str());
+        Serial.print("Sent back: ");
+        Serial.println(tx_estring_value.c_str());
+        currMillis = millis();
+      }
+      tx_estring_value.clear();
+      tx_estring_value.append("END");
+      tx_characteristic_string.writeValue(tx_estring_value.c_str());
+      Serial.print("Sent back: ");
+      Serial.println(tx_estring_value.c_str());
+
       break;
 
 
