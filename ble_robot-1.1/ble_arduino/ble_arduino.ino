@@ -144,7 +144,6 @@ void handle_command() {
       Serial.println(tx_estring_value.c_str());
 
 
-
       break;
     /*
          * DANCE
@@ -172,12 +171,6 @@ void handle_command() {
       Serial.print("Sent back: ");
       Serial.println(tx_estring_value.c_str());
 
-      tx_estring_value.clear();
-      tx_estring_value.append("END");
-      tx_characteristic_string.writeValue(tx_estring_value.c_str());
-      Serial.print("Sent back: ");
-      Serial.println(tx_estring_value.c_str());
-
       break;
 
     case GET_TEMP_5s:
@@ -194,7 +187,7 @@ void handle_command() {
         Serial.print("Sent back: ");
         Serial.println(tx_estring_value.c_str());
         if (count != 4)
-          delay(995);
+          delay(999);
         count++;
       }
 
@@ -205,6 +198,7 @@ void handle_command() {
       Serial.print("Sent back: ");
       Serial.println(tx_estring_value.c_str());
       break;
+
 
     case GET_TEMP_5s_RAPID:
 
