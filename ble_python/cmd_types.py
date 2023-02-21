@@ -10,3 +10,4 @@ class CMD(Enum):
     GET_TIME_MILLIS = 6
     GET_TEMP_5s = 7
     GET_TEMP_5s_RAPID = 8
+    GET_TOF_5s = 9

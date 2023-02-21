@@ -2,6 +2,14 @@
 #include "EString.h"
 #include "RobotCommand.h"
 #include <ArduinoBLE.h>
+#include <Wire.h>
+#include "SparkFun_VL53L1X.h"  //Click here to get the library: http://librarymanager/All#SparkFun_VL53L1X
+
+#define SHUTDOWN_PIN 8
+
+SFEVL53L1X distanceSensor1;
+
+SFEVL53L1X distanceSensor2(Wire, SHUTDOWN_PIN);
 
 //////////// For Temperature Reading ////////////
 #define RESOLUTION_BITS (16)
@@ -42,6 +50,9 @@ unsigned long currentMillis = 0;
 
 static long prevMillis = 0;
 unsigned long currMillis = 0;
+
+static long prevMillisTOF = 0;
+unsigned long currMillisTOF = 0;
 //////////// Global Variables ////////////
 
 
@@ -56,6 +67,7 @@ enum CommandTypes {
   GET_TIME_MILLIS,
   GET_TEMP_5s,
   GET_TEMP_5s_RAPID,
+  GET_TOF_5s,
 };
 
 void handle_command() {
@@ -226,6 +238,36 @@ void handle_command() {
 
       break;
 
+      case GET_TOF_5s:
+        prevMillisTOF = millis();
+        currMillisTOF = prevMillisTOF;
+
+        while (currMillisTOF - prevMillisTOF <= 5000) {
+          tx_estring_value.clear();
+          tx_estring_value.append("T:");
+          tx_estring_value.append((int)millis());
+
+          if (distanceSensor1.checkForDataReady()) {
+            int distance1 = distanceSensor1.getDistance();
+            tx_estring_value.append("|D1:");
+            tx_estring_value.append(distance1);
+          }
+          if (distanceSensor2.checkForDataReady()) {
+            int distance2 = distanceSensor2.getDistance();
+            tx_estring_value.append("|D2:");
+            tx_estring_value.append(distance2);
+          }
+
+          tx_characteristic_string.writeValue(tx_estring_value.c_str());
+          Serial.print("Sent back: ");
+          Serial.println(tx_estring_value.c_str());
+          currMillisTOF = millis();
+        }
+
+        break;
+
+
+
 
     /* 
          * The default case may not capture all types of invalid commands.
@@ -240,7 +282,38 @@ void handle_command() {
 }
 
 void setup() {
+  Wire.begin();
   Serial.begin(115200);
+
+  pinMode(SHUTDOWN_PIN, OUTPUT);
+  digitalWrite(SHUTDOWN_PIN, LOW);
+
+  if (distanceSensor1.begin() != 0)  //Begin returns 0 on a good init
+  {
+    Serial.println("Sensor 1 failed to begin. Please check wiring. Freezing...");
+    while (1)
+      ;
+  }
+  Serial.println("Sensor 1 online!");
+  distanceSensor1.setI2CAddress(0x02);
+  Serial.println(distanceSensor1.getI2CAddress());
+
+  digitalWrite(SHUTDOWN_PIN, HIGH);
+
+  if (distanceSensor2.begin() != 0)  //Begin returns 0 on a good init
+  {
+    Serial.println("Sensor 2 failed to begin. Please check wiring. Freezing...");
+    while (1)
+      ;
+  }
+  Serial.println("Sensor 2 online!");
+
+  distanceSensor1.setDistanceModeShort();
+  distanceSensor2.setDistanceModeShort();
+
+
+  distanceSensor1.startRanging();
+  distanceSensor2.startRanging();
 
   analogReadResolution(RESOLUTION_BITS);
   analogWriteResolution(RESOLUTION_BITS);
