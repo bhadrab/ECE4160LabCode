@@ -56,116 +56,29 @@ void loop() {
     if (myICM.dataReady()) {
       myICM.getAGMT();  // The values are only updated when you call 'getAGMT'
 
-
-      //Slide 20 Accelerometer introduction
-      //NB: Setup Serialplot Y axis [-2000 2000]
-
-
-      //Slide 22, accelerometer
-      //NB: Setup Serialplot Y axis [-180 180]
-      // pitch_a = atan2(myICM.accX(), myICM.accZ()) * 180 / M_PI;
-      // roll_a = atan2(myICM.accY(), myICM.accZ()) * 180 / M_PI;
-
-
-  
-
-      // //Slide 23, LPF
-      // //Tilt along y-axis
-      // const float alpha = 0.9;
-      // pitch_a_LPF[n] = alpha * pitch_a + (1 - alpha) * pitch_a_LPF[n - 1];
-      // pitch_a_LPF[n - 1] = pitch_a_LPF[n];
-
-
-      // roll_a_LPF[n] = alpha * roll_a + (1 - alpha) * roll_a_LPF[n - 1];
-      // roll_a_LPF[n - 1] = roll_a_LPF[n];
-
-      // Serial.print(millis());
-      // Serial.print(" ");
-      // //Serial.print("AccPitch:");
-      // Serial.print(pitch_a);
-      // Serial.print(" ");
-      // //Serial.print("AccRoll:");
-      // Serial.print(roll_a);
-      // Serial.print(" ");
-      // //Serial.print("AccPitchLPF:");
-      // Serial.print(pitch_a_LPF[n]);
-      // Serial.print(" ");
-      // //Serial.print("AccRollLPF:");
-      // Serial.println(roll_a_LPF[n]);
-
-      //Slide 33, Gyroscope
       dt = (micros()-last_time)/1000000.;
       last_time = micros();
       pitch_g = pitch_g + myICM.gyrY()*dt;
       roll_g = roll_g + myICM.gyrX()*dt;
       yaw_g = yaw_g + myICM.gyrZ()*dt;
-      const float alpha = 0.9;
+      const float alpha = 0.2;
       pitch_a = -atan2(myICM.accX(),myICM.accZ())*180/M_PI;
       roll_a = atan2(myICM.accY(),myICM.accZ())*180/M_PI;
-
       pitch_a_LPF[n] = alpha * pitch_a + (1 - alpha) * pitch_a_LPF[n - 1];
       pitch_a_LPF[n - 1] = pitch_a_LPF[n];
       roll_a_LPF[n] = alpha * roll_a + (1 - alpha) * roll_a_LPF[n - 1];
       roll_a_LPF[n - 1] = roll_a_LPF[n];
 
-      comp_pitch = (comp_pitch - myICM.gyrY()*dt)*0.8 + pitch_a*0.2;
-      comp_roll = (comp_roll - myICM.gyrZ()*dt)*0.9 + roll_a*0.1;
-
-      Serial.print("pitch_g:");
-      Serial.print(pitch_g);
-      Serial.print(",");
-      Serial.print("roll_g:");
-      Serial.print(roll_g);
-      Serial.print(",");
-      Serial.print("yaw_g:");
-      Serial.print(yaw_g);
-      Serial.print(", "); 
-      Serial.print("pitch_a:");
-      Serial.print(pitch_a_LPF[n]);
-      Serial.print(", "); 
-      Serial.print("roll_a:");
-      Serial.print(roll_a_LPF[n]);
-      Serial.print(", "); 
+      comp_pitch = (comp_pitch - myICM.gyrY()*dt)*0.9 + pitch_a_LPF[n]*0.1;
+      comp_roll = (comp_roll - myICM.gyrZ()*dt)*0.9 + roll_a_LPF[n]*0.1;
+      
+      
       Serial.print("pitch:");
-      Serial.print(comp_pitch);
+      Serial.print(pitch_a);
       Serial.print(", "); 
       Serial.print("roll:");
-      Serial.println(comp_roll);
-
-
-
-
-      /*
-      //Slide 34, Gyroscope and Accelerometer
-      //print pitch_a, pitch_g, pitch
-      pitch = (pitch+myICM.gyrX()*dt)*0.9 + pitch_a*0.1;
-      Serial.print(", ");
-      Serial.println(pitch);
-*/
-      /*
-      Xm = myICM.magX();
-      Ym = myICM.magY();
-      Zm = myICM.magZ();
-      Serial.println(Xm);
-      //yaw = atan2(Xm,Ym)*180/M_PI;
-      //Serial.print(", ");
-      //Serial.println(yaw);
-*/
-      /*
-      pitch_a = atan2(myICM.accY(),myICM.accZ())*180/M_PI;
-      dt = (micros()-last_time)/1000000.;
-      last_time = micros();
-      pitch_g = pitch_g + myICM.gyrX()*dt;
-      pitch = (pitch+myICM.gyrX()*dt)*0.9 + pitch_a*0.1;
-      roll_a  = atan2(myICM.accX(),myICM.accZ())*180/M_PI; 
-      roll_g = roll_g + myICM.gyrY()*dt;
-      roll = (roll+myICM.gyrY()*dt)*0.9 + roll_a*0.1;
-      x = Ym*cos(roll*M_PI/180) - Zm*sin(roll*M_PI/180);
-      y = Xm*cos(pitch*M_PI/180) + Ym*sin(roll*M_PI/180)*sin(pitch*M_PI/180) + Zm*cos(roll*M_PI/180)*sin(pitch*M_PI/180);
-      yaw = atan2(y,x)*180/M_PI;
-      Serial.print(", ");
-      Serial.println(yaw);
-*/
+      Serial.println(pitch_g);
+      
     }
   }
 }
