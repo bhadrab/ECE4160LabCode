@@ -8,4 +8,5 @@ characteristics:
   RX_FLOAT: '27616294-3063-4ecc-b60b-3470ddef2938'
   RX_STRING: 'f235a225-6735-4d73-94cb-ee5dfce9ba83'
   RX_STRING2: '6ffc30b7-807f-42e0-994c-4c209f85e9e2'
+  RX_MOTORPWM: '2b9fa4e1-dd62-49d6-97c7-0799ef7b1188'
 

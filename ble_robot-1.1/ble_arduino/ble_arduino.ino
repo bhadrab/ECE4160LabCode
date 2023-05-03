@@ -7,6 +7,10 @@
 #include "ICM_20948.h"         // Click here to get the library: http://librarymanager/All#SparkFun_ICM_20948_IMU
 #include <math.h>
 
+int PWM = 0;
+int targetDist = 304;
+float kp = 0.03;
+
 #define SERIAL_PORT Serial
 #define AD0_VAL 1  // The value of the last bit of the I2C address, on the SparkFun 9DoF IMU breakout the default is 1
 #define blinkPin LED_BUILTIN
@@ -19,12 +23,22 @@ SFEVL53L1X distanceSensor1;
 
 SFEVL53L1X distanceSensor2(Wire, SHUTDOWN_PIN);
 
-//////////// For Temperature Reading ////////////
-#define RESOLUTION_BITS (16)
-#ifdef ADCPIN
-#define EXTERNAL_ADC_PIN ADCPIN
-#endif
-//////////// For Temperature Reading ////////////
+
+/////////////////Motor Drivers//////////////////////
+#define motorL1 A3
+#define motorL2 A2
+#define motorR1 4
+#define motorR2 A5
+int leftPWM = 0;
+int rightPWM = 0;
+/////////////////Motor Drivers//////////////////////
+
+////////////////Data Arrays/////////////////////////
+int time_array[1500];
+int TOF_array[1500];
+int PWM_array[1500];
+////////////////Data Arrays/////////////////////////
+
 
 
 
@@ -36,6 +50,7 @@ SFEVL53L1X distanceSensor2(Wire, SHUTDOWN_PIN);
 #define BLE_UUID_TX_FLOAT "27616294-3063-4ecc-b60b-3470ddef2938"
 #define BLE_UUID_TX_STRING "f235a225-6735-4d73-94cb-ee5dfce9ba83"
 #define BLE_UUID_TX_STRING2 "6ffc30b7-807f-42e0-994c-4c209f85e9e2"
+#define BLE_UUID_TX_MOTORPWM "2b9fa4e1-dd62-49d6-97c7-0799ef7b1188"
 //////////// BLE UUIDs ////////////
 
 //////////// Global Variables ////////////
@@ -46,6 +61,7 @@ BLECStringCharacteristic rx_characteristic_string(BLE_UUID_RX_STRING, BLEWrite, 
 BLEFloatCharacteristic tx_characteristic_float(BLE_UUID_TX_FLOAT, BLERead | BLENotify);
 BLECStringCharacteristic tx_characteristic_string(BLE_UUID_TX_STRING, BLERead | BLENotify, MAX_MSG_SIZE);
 BLECStringCharacteristic tx_characteristic_string2(BLE_UUID_TX_STRING2, BLERead | BLENotify, MAX_MSG_SIZE);
+BLECStringCharacteristic tx_characteristic_motorPWM(BLE_UUID_TX_STRING2, BLERead | BLENotify, MAX_MSG_SIZE);
 
 // RX
 RobotCommand robot_cmd(":|");
@@ -53,6 +69,7 @@ RobotCommand robot_cmd(":|");
 // TX
 EString tx_estring_value;
 EString tx_estring2_value;
+EString tx_motorPWM_value;
 float tx_float_value = 0.0;
 
 long interval = 500;
@@ -70,6 +87,15 @@ void setup() {
   Wire.begin();
   Wire.setClock(400000);
   Serial.begin(115200);
+
+  /////////////////Motor Drivers//////////////////////
+  pinMode(motorL1, OUTPUT);
+  pinMode(motorL2, OUTPUT);
+  pinMode(motorR1, OUTPUT);
+  pinMode(motorR2, OUTPUT);
+
+  /////////////////Motor Drivers//////////////////////
+
 
   //////////////////////////IMU////////////////////////////////////////
   bool initialized = false;
@@ -103,24 +129,22 @@ void setup() {
 
   digitalWrite(SHUTDOWN_PIN, HIGH);
 
-  if (distanceSensor2.begin() != 0)  //Begin returns 0 on a good init
-  {
-    Serial.println("Sensor 2 failed to begin. Please check wiring. Freezing...");
-    while (1)
-      ;
-  }
-  Serial.println("Sensor 2 online!");
+  // if (distanceSensor2.begin() != 0)  //Begin returns 0 on a good init
+  // {
+  //   Serial.println("Sensor 2 failed to begin. Please check wiring. Freezing...");
+  //   while (1)
+  //     ;
+  // }
+  // Serial.println("Sensor 2 online!");
 
   distanceSensor1.setDistanceModeShort();
-  distanceSensor2.setDistanceModeShort();
+  // distanceSensor2.setDistanceModeShort();
 
 
   distanceSensor1.startRanging();
-  distanceSensor2.startRanging();
 
-  analogReadResolution(RESOLUTION_BITS);
-  analogWriteResolution(RESOLUTION_BITS);
   //////////////////////////TOF////////////////////////////////////////
+
 
   //////////////////////////BLE////////////////////////////////////////
   BLE.begin();
@@ -134,6 +158,7 @@ void setup() {
   testService.addCharacteristic(tx_characteristic_float);
   testService.addCharacteristic(tx_characteristic_string);
   testService.addCharacteristic(tx_characteristic_string2);
+  testService.addCharacteristic(tx_characteristic_motorPWM);
   testService.addCharacteristic(rx_characteristic_string);
 
   // Add BLE service
@@ -168,6 +193,7 @@ void setup() {
   BLE.advertise();
   //////////////////////////BLE////////////////////////////////////////
 
+
   for (int i = 0; i < 4; i++) {
     digitalWrite(blinkPin, HIGH);
     delay(1000);
@@ -193,6 +219,10 @@ void loop() {
       // Read data
       read_data();
     }
+    analogWrite(motorL2, 0);
+    analogWrite(motorL1, 0);
+    analogWrite(motorR2, 0);
+    analogWrite(motorR1, 0);
 
     Serial.println("Disconnected");
   }
@@ -205,6 +235,9 @@ enum CommandTypes {
   SEND_TWO_INTS,
   GET_TOF_5s,
   GET_TOF_IMU,
+  START,
+  STOP,
+  START_PID,
 
 };
 
@@ -281,11 +314,6 @@ void handle_command() {
           tx_estring_value.append("|D1:");
           tx_estring_value.append(distance1);
         }
-        if (distanceSensor2.checkForDataReady()) {
-          int distance2 = distanceSensor2.getDistance();
-          tx_estring_value.append("|D2:");
-          tx_estring_value.append(distance2);
-        }
 
         tx_characteristic_string.writeValue(tx_estring_value.c_str());
         Serial.print("Sent back: ");
@@ -305,12 +333,20 @@ void handle_command() {
         double roll_a_LPF[] = { 0, 0 };
         const int n = 1;
 
+        int TOFtimes[60];
+        int IMUtimes[60];
+        int pitchA[60];
+        int rollA[60];
+        int distance1A[60];
+        int distance2A[60];
+        int leftPWMA[60];
+        int rightPWMA[60];
+
+        int i = 0;
+        int j = 0;
+
 
         while (currMillisTOF - prevMillisTOF <= 5000) {
-
-          tx_estring_value.clear();
-          tx_estring_value.append("T:");
-          tx_estring_value.append((int)millis());
 
           if (myICM.dataReady()) {
             myICM.getAGMT();  // The values are only updated when you call 'getAGMT'
@@ -329,43 +365,112 @@ void handle_command() {
 
             comp_pitch = (comp_pitch - myICM.gyrY() * dt) * 0.9 + pitch_a_LPF[n] * 0.1;
             comp_roll = (comp_roll - myICM.gyrZ() * dt) * 0.9 + roll_a_LPF[n] * 0.1;
-            tx_estring_value.append("|P:");
-            tx_estring_value.append(comp_pitch);
-            tx_estring_value.append("|R:");
-            tx_estring_value.append(comp_roll);
+            if (i <= 60) {
+              IMUtimes[i] = (int)millis();
+              pitchA[i] = comp_pitch;
+              rollA[i] = comp_roll;
+              i++;
+            }
           }
 
-          tx_estring2_value.clear();
-          tx_estring2_value.append("T:");
-          tx_estring2_value.append((int)millis());
-
+          int distance1;
           if (distanceSensor1.checkForDataReady()) {
-            int distance1 = distanceSensor1.getDistance();
-            tx_estring2_value.append("|D1:");
-            tx_estring2_value.append(distance1);
+            distance1 = distanceSensor1.getDistance();
+            Serial.print("\tDistance 1(mm): ");
+            Serial.print(distance1);
           }
-          if (distanceSensor2.checkForDataReady()) {
-            int distance2 = distanceSensor2.getDistance();
-            tx_estring2_value.append("|D2:");
-            tx_estring2_value.append(distance2);
-          }       
+          if (j <= 60) {
+            TOFtimes[i] = (int)millis();
+            distance1A[i] = distance1;
+            j++;
+          }
 
 
-
-          tx_characteristic_string.writeValue(tx_estring_value.c_str());
-          tx_characteristic_string2.writeValue(tx_estring2_value.c_str());
           // Serial.print("Sent back: ");
           // Serial.println(tx_estring_value.c_str());
           currMillisTOF = millis();
         }
+        int k = 0;
+        while (k < i) {
+          tx_estring_value.clear();
+          tx_estring_value.append("T:");
+          tx_estring_value.append(IMUtimes[k]);
+          tx_estring_value.append("|P:");
+          tx_estring_value.append(pitchA[k]);
+          tx_estring_value.append("|R:");
+          tx_estring_value.append(rollA[k]);
+          tx_characteristic_string.writeValue(tx_estring_value.c_str());
+          k++;
+        }
+        int l = 0;
+        while (l < j) {
+          tx_estring2_value.clear();
+          tx_estring2_value.append("T:");
+          tx_estring2_value.append(TOFtimes[k]);
+          tx_estring2_value.append("|D:");
+          tx_estring2_value.append(distance1A[k]);
+          tx_characteristic_string2.writeValue(tx_estring2_value.c_str());
+          l++;
+        }
       }
+      break;
+
+    case START:
+      Serial.println("moving");
+      analogWrite(motorL2, 200);
+      analogWrite(motorL1, 0);
+      analogWrite(motorR2, 200);
+      analogWrite(motorR1, 0);
+      break;
+
+    case STOP:
+      analogWrite(motorL2, 0);
+      analogWrite(motorL1, 0);
+      analogWrite(motorR2, 0);
+      analogWrite(motorR1, 0);
 
       break;
 
 
+    case START_PID:
+      {
+        prevMillisTOF = millis();
+        currMillisTOF = prevMillisTOF;
+        int count = 0;
+        int distance = 0;
 
+        while (currMillisTOF - prevMillisTOF <= 40000) {
+          time_array[count] = (int)millis();
 
+          if (distanceSensor1.checkForDataReady()) {
+            Serial.println("got tof");
+            distance = distanceSensor1.getDistance();
+            TOF_array[count] = distance;
+          }
+          PWM_array[count] = PID(distance);
+          currMillisTOF = millis();
+          count++;
+        }
 
+        analogWrite(motorL2, 0);
+        analogWrite(motorL1, 0);
+        analogWrite(motorR2, 0);
+        analogWrite(motorR1, 0);
+
+        for (int i = 0; i < 1500; i++) {
+          tx_estring_value.clear();
+          tx_estring_value.append("T:");
+          tx_estring_value.append(time_array[i]);
+          tx_estring_value.append("|");
+          tx_estring_value.append("D:");
+          tx_estring_value.append(TOF_array[i]);
+          tx_estring_value.append("|");
+          tx_estring_value.append("P:");
+          tx_estring_value.append(PWM_array[i]);
+          tx_characteristic_string.writeValue(tx_estring_value.c_str());
+        }
+      }
+      break;
 
 
     /* 
@@ -378,6 +483,44 @@ void handle_command() {
       Serial.println(cmd_type);
       break;
   }
+}
+
+
+int PID(int dist) {
+  int currDist = dist;
+  float error = (float)(targetDist - currDist);
+  float speed = kp * error;
+  Serial.println(speed);
+  PWM = speed;
+
+
+  if (PWM < 0) {
+    Serial.println("forward");
+    PWM = max(PWM, -255);
+    PWM = min(PWM, -40);
+    PWM = -PWM;
+    analogWrite(motorL2, PWM);
+    analogWrite(motorL1, 0);
+    analogWrite(motorR2, PWM);
+    analogWrite(motorR1, 0);
+
+  } else if (PWM > 0) {
+    Serial.println("backward");
+
+    PWM = min(PWM, 255);
+    PWM = max(PWM, 40);
+
+    analogWrite(motorL2, 0);
+    analogWrite(motorL1, PWM);
+    analogWrite(motorR2, 0);
+    analogWrite(motorR1, PWM);
+  } else {
+    analogWrite(motorL2, 0);
+    analogWrite(motorL1, 0);
+    analogWrite(motorR2, 0);
+    analogWrite(motorR1, 0);
+  }
+  return speed;
 }
 
 
@@ -505,3 +648,46 @@ void printScaledAGMT(ICM_20948_AGMT_t agmt) {
 }
 
 ////////IMU HELPER FUNCTIONS//////////////////////////
+
+
+/*
+void PID_control(int dist) {
+  int current_distance = dist;
+  float error = current_distance - target_distance;
+  float proportional = KP * error;
+
+  PWM = proportional;
+
+  // if (PWM < range && PWM > -range) {
+  //   PWM = 0;
+  //   analogWrite(motorL2, 0);
+  //   analogWrite(motorL1, 0);
+  //   analogWrite(motorR2, 0);
+  //   analogWrite(motorR1, 0);
+  //   ;
+  // } else
+  PWM = min(PWM, 255);
+  PWM = max(PWM, 50);
+  if (PWM < 0) {
+    // PWM = min(PWM, 255);
+    // PWM = min(PWM, 40);
+    analogWrite(motorL2, 0);
+    analogWrite(motorL1, PWM);
+    analogWrite(motorR2, 0);
+    analogWrite(motorR1, PWM);
+  } else if (PWM > 0) {
+    // PWM = min(PWM, 255);
+    // PWM = min(PWM, 40);
+    analogWrite(motorL2, PWM);
+    analogWrite(motorL1, 0);
+    analogWrite(motorR2, PWM);
+    analogWrite(motorR1, 0);
+
+  } else {
+    analogWrite(motorL2, 0);
+    analogWrite(motorL1, 0);
+    analogWrite(motorR2, 0);
+    analogWrite(motorR1, 0);
+  }
+}
+*/

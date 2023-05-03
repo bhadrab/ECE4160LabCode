@@ -30,20 +30,20 @@ void setup(void) {
 
   digitalWrite(SHUTDOWN_PIN, HIGH);
 
-  if (distanceSensor2.begin() != 0)  //Begin returns 0 on a good init
-  {
-    Serial.println("Sensor 2 failed to begin. Please check wiring. Freezing...");
-    while (1)
-      ;
-  }
-  Serial.println("Sensor 2 online!");
+  // if (distanceSensor2.begin() != 0)  //Begin returns 0 on a good init
+  // {
+  //   Serial.println("Sensor 2 failed to begin. Please check wiring. Freezing...");
+  //   while (1)
+  //     ;
+  // }
+  // Serial.println("Sensor 2 online!");
 
   distanceSensor1.setDistanceModeShort();
-  distanceSensor2.setDistanceModeShort();
+  // distanceSensor2.setDistanceModeShort();
 
 
   distanceSensor1.startRanging();
-  distanceSensor2.startRanging();
+  // distanceSensor2.startRanging();
 }
 
 void loop(void) {
@@ -54,10 +54,15 @@ void loop(void) {
     Serial.print(distance1);
   }
 
-  if (distanceSensor2.checkForDataReady()) {
-    int distance2 = distanceSensor2.getDistance();
-    Serial.print("\tDistance 2(mm): ");
-    Serial.print(distance2);
-  }
+  // if (distanceSensor2.checkForDataReady()) {
+  //   int distance2 = distanceSensor2.getDistance();
+  //   Serial.print("\tDistance 2(mm): ");
+  //   Serial.print(distance2);
+  // }
   Serial.println();
 }
+
+
+
+
+
