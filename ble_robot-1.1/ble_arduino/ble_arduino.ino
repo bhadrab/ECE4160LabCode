@@ -9,7 +9,7 @@
 
 int PWM = 0;
 int targetDist = 304;
-float kp = 0.03;
+float kp = 0.04;
 
 #define SERIAL_PORT Serial
 #define AD0_VAL 1  // The value of the last bit of the I2C address, on the SparkFun 9DoF IMU breakout the default is 1
@@ -137,7 +137,7 @@ void setup() {
   // }
   // Serial.println("Sensor 2 online!");
 
-  distanceSensor1.setDistanceModeShort();
+  distanceSensor1.setDistanceModeLong();
   // distanceSensor2.setDistanceModeShort();
 
 
@@ -304,7 +304,13 @@ void handle_command() {
       prevMillisTOF = millis();
       currMillisTOF = prevMillisTOF;
 
-      while (currMillisTOF - prevMillisTOF <= 5000) {
+      analogWrite(motorL2, 105);
+      analogWrite(motorL1, 0);
+      analogWrite(motorR2, 106);
+      analogWrite(motorR1, 0);
+
+      while (currMillisTOF - prevMillisTOF <= 7000) {
+
         tx_estring_value.clear();
         tx_estring_value.append("T:");
         tx_estring_value.append((int)millis());
@@ -320,6 +326,10 @@ void handle_command() {
         Serial.println(tx_estring_value.c_str());
         currMillisTOF = millis();
       }
+      analogWrite(motorL2, 0);
+      analogWrite(motorL1, 0);
+      analogWrite(motorR2, 0);
+      analogWrite(motorR1, 0);
 
       break;
 
