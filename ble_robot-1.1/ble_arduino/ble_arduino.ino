@@ -11,7 +11,7 @@ using namespace BLA;
 
 int PWM = 0;
 int targetDist = 100;
-float kp = 0.06;
+float kp = 0.03;
 
 #define SERIAL_PORT Serial
 #define AD0_VAL 1  // The value of the last bit of the I2C address, on the SparkFun 9DoF IMU breakout the default is 1
@@ -40,6 +40,7 @@ int time_array[1000];
 int TOF_array[1000];
 int PWM_array[1000];
 int xkf_array[1000];
+int angV_array[1000];
 ////////////////Data Arrays/////////////////////////
 
 
@@ -126,55 +127,55 @@ Matrix<1, 1> sig_z = { sig3 ^ 2 };
 
 //////// KF Variables ////////
 
-float d_val =  1.0 / 1500.0;  // drag
-float m_val = 0.0004342944819032519; // mass
+float d_val = 1.0 / 1500.0;           // drag
+float m_val = 0.0004342944819032519;  // mass
 
 // A, B, C matrices
-Matrix<2,2> A_mat = { 0, 1,
-                      0, -d_val/m_val };
-Matrix<2,1> B_mat = { 0, 
-                      1/m_val };
-Matrix<1,2> C_mat = { -1, 0 };
+Matrix<2, 2> A_mat = { 0, 1,
+                       0, -d_val / m_val };
+Matrix<2, 1> B_mat = { 0,
+                       1 / m_val };
+Matrix<1, 2> C_mat = { -1, 0 };
 
 // Process and measurement noise
-Matrix<2,2> sig_u = { 40^2, 0,
-                      0, 40^2 };
-Matrix<1,1> sig_z = { 20^2 };
+Matrix<2, 2> sig_u = { 40 ^ 2, 0,
+                       0, 40 ^ 2 };
+Matrix<1, 1> sig_z = { 20 ^ 2 };
 
 // Discretize A & B
 float delta_t = 0.015;
-Matrix<2,2> I_mat = { 1, 0,
-                      0, 1      };
-Matrix<2,2> A_d   = { 1, 0.015,
-                      0, 0.9867 };
-Matrix<2,1> B_d   = { 0,
-                      26.5957   };
+Matrix<2, 2> I_mat = { 1, 0,
+                       0, 1 };
+Matrix<2, 2> A_d = { 1, 0.015,
+                     0, 0.9867 };
+Matrix<2, 1> B_d = { 0,
+                     26.5957 };
 
 // Initial states
-Matrix<2,2> sig   = { 2^2, 0,
-                      0, 2^2 }; // initial state uncertainty
-Matrix<2,1> x_val = { -3000, 
-                      0      }; // initial state output
+Matrix<2, 2> sig = { 2 ^ 2, 0,
+                     0, 2 ^ 2 };  // initial state uncertainty
+Matrix<2, 1> x_val = { -3000,
+                       0 };  // initial state output
 
 //////// KF Function ////////
 
 void kf(int distKF) {
 
-  Matrix<2,1> x_p = A_d*x_val + B_d*PWM;
-  Matrix<2,2> sig_p = A_d*sig*(~A_d) + sig_u;
+  Matrix<2, 1> x_p = A_d * x_val + B_d * PWM;
+  Matrix<2, 2> sig_p = A_d * sig * (~A_d) + sig_u;
 
-  Matrix<1,1> y_curr = {distKF};
-  Matrix<1,1> y_m = y_curr - C_mat*x_p;
-  Matrix<1,1> sig_m = C_mat*sig_p*(~C_mat) + sig_z;
+  Matrix<1, 1> y_curr = { distKF };
+  Matrix<1, 1> y_m = y_curr - C_mat * x_p;
+  Matrix<1, 1> sig_m = C_mat * sig_p * (~C_mat) + sig_z;
 
-  Matrix<1,1> sig_m_inv = sig_m;
+  Matrix<1, 1> sig_m_inv = sig_m;
   Invert(sig_m_inv);
 
-  Matrix<2,1> kf_gain = sig_p*(~C_mat)*(sig_m_inv);
+  Matrix<2, 1> kf_gain = sig_p * (~C_mat) * (sig_m_inv);
 
   // Update
-  x_val = x_p + kf_gain*y_m;
-  sig = (I_mat - kf_gain*C_mat)*sig_p;
+  x_val = x_p + kf_gain * y_m;
+  sig = (I_mat - kf_gain * C_mat) * sig_p;
 }
 
 
@@ -334,6 +335,7 @@ enum CommandTypes {
   START,
   STOP,
   START_PID,
+  START_MAP,
 
 };
 
@@ -522,10 +524,9 @@ void handle_command() {
       break;
 
     case START:
-      Serial.println("moving");
-      analogWrite(motorL2, 200);
+      analogWrite(motorL2, 80);
       analogWrite(motorL1, 0);
-      analogWrite(motorR2, 200);
+      analogWrite(motorR2, 80);
       analogWrite(motorR1, 0);
       break;
 
@@ -554,7 +555,7 @@ void handle_command() {
             TOF_array[count] = distance;
           }
           PWM_array[count] = PID(distance);
-          xkf_array[count] = x_val(0,0);
+          xkf_array[count] = x_val(0, 0);
           currMillisTOF = millis();
           count++;
         }
@@ -577,7 +578,56 @@ void handle_command() {
           tx_estring_value.append("|");
           tx_estring_value.append("X:");
           tx_estring_value.append(xkf_array[i]);
-          
+
+          tx_characteristic_string.writeValue(tx_estring_value.c_str());
+        }
+      }
+      break;
+
+    case START_MAP:
+      {
+        prevMillisTOF = millis();
+        currMillisTOF = prevMillisTOF;
+        int count = 0;
+        int distance = 0;
+        float angV = 0;
+        while (currMillisTOF - prevMillisTOF <= 10000) {
+          time_array[count] = (int)millis();
+          if (myICM.dataReady()) {
+            myICM.getAGMT();
+            angV = myICM.gyrZ();
+          PWM_array[count] = pid_map(angV);
+          }
+          angV_array[count] = angV;
+
+          if (distanceSensor1.checkForDataReady()) {
+            Serial.println("got tof");
+            distance = distanceSensor1.getDistance();
+            TOF_array[count] = distance;
+          }
+          currMillisTOF = millis();
+          count++;
+        }
+
+        analogWrite(motorL2, 0);
+        analogWrite(motorL1, 0);
+        analogWrite(motorR2, 0);
+        analogWrite(motorR1, 0);
+
+        for (int i = 0; i < 1000; i++) {
+          tx_estring_value.clear();
+          tx_estring_value.append("T:");
+          tx_estring_value.append(time_array[i]);
+          tx_estring_value.append("|");
+          tx_estring_value.append("D:");
+          tx_estring_value.append(TOF_array[i]);
+          tx_estring_value.append("|");
+          tx_estring_value.append("P:");
+          tx_estring_value.append(PWM_array[i]);
+          tx_estring_value.append("|");
+          tx_estring_value.append("X:");
+          tx_estring_value.append(angV_array[i]);
+
           tx_characteristic_string.writeValue(tx_estring_value.c_str());
         }
       }
@@ -608,16 +658,16 @@ void handle_command() {
 //   Matrix<2, 1> kkf_gain = sigma_p * (~C_kf) * (sigma_m_inv);
 
 //   Matrix<1, 1> y_kf = { distKF };
-//   Matrix<1, 1> y_m = y_kf - C_kf * mu_p;  
+//   Matrix<1, 1> y_m = y_kf - C_kf * mu_p;
 
- 
+
 //   x_kf = mu_p + kkf_gain * y_m;
 //   sig = (I2 - kkf_gain * C_kf) * sigma_p;
 // }
 
 int PID(int dist) {
   kf(dist);
-  float currDist = -x_val(0,0);
+  float currDist = -x_val(0, 0);
   float error = (float)(targetDist - currDist);
   float speed = kp * error;
   Serial.println(speed);
@@ -650,7 +700,26 @@ int PID(int dist) {
     analogWrite(motorR2, 0);
     analogWrite(motorR1, 0);
   }
-  return PWM * (speed/abs(speed));
+  return speed;
+}
+
+
+
+int pid_map(float angV){
+  float error = (-1.0 * angV) - 15.0;
+  float speed = 85 - (kp * error);
+  PWM = speed;
+  PWM = min(PWM, 255);
+  PWM = max(PWM, 70);
+
+  analogWrite(motorL2, PWM);
+  analogWrite(motorL1, 0);
+  analogWrite(motorR2, 0);
+  analogWrite(motorR1, PWM);
+  
+
+  
+  return speed;
 }
 
 

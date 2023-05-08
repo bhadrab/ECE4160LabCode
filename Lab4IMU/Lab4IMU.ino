@@ -72,7 +72,8 @@ void loop() {
       comp_pitch = (comp_pitch - myICM.gyrY()*dt)*0.9 + pitch_a_LPF[n]*0.1;
       comp_roll = (comp_roll - myICM.gyrZ()*dt)*0.9 + roll_a_LPF[n]*0.1;
       
-      
+      Serial.print("acc:");
+      Serial.print(myICM.gyrZ());
       Serial.print("pitch:");
       Serial.print(pitch_a);
       Serial.print(", "); 
