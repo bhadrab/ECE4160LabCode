@@ -1,4 +1,5 @@
 """CSS selector parser."""
+from __future__ import annotations
 import re
 from functools import lru_cache
 from . import util
@@ -6,7 +7,7 @@ from . import css_match as cm
 from . import css_types as ct
 from .util import SelectorSyntaxError
 import warnings
-from typing import Optional, Dict, Match, Tuple, Type, Any, List, Union, Iterator, cast
+from typing import Match, Any, Iterator, cast
 
 UNICODE_REPLACEMENT_CHAR = 0xFFFD
 
@@ -112,7 +113,7 @@ VALUE = r'''
 '''.format(nl=NEWLINE, ident=IDENTIFIER)
 # Attribute value comparison. `!=` is handled special as it is non-standard.
 ATTR = r'''
-(?:{ws}*(?P<cmp>[!~^|*$]?=){ws}*(?P<value>{value})(?:{ws}+(?P<case>[is]))?)?{ws}*\]
+(?:{ws}*(?P<cmp>[!~^|*$]?=){ws}*(?P<value>{value})(?:{ws}*(?P<case>[is]))?)?{ws}*\]
 '''.format(ws=WSC, value=VALUE)
 
 # Selector patterns
@@ -206,8 +207,8 @@ _MAXCACHE = 500
 @lru_cache(maxsize=_MAXCACHE)
 def _cached_css_compile(
     pattern: str,
-    namespaces: Optional[ct.Namespaces],
-    custom: Optional[ct.CustomSelectors],
+    namespaces: ct.Namespaces | None,
+    custom: ct.CustomSelectors | None,
     flags: int
 ) -> cm.SoupSieve:
     """Cached CSS compile."""
@@ -232,7 +233,7 @@ def _purge_cache() -> None:
     _cached_css_compile.cache_clear()
 
 
-def process_custom(custom: Optional[ct.CustomSelectors]) -> Dict[str, Union[str, ct.SelectorList]]:
+def process_custom(custom: ct.CustomSelectors | None) -> dict[str, str | ct.SelectorList]:
     """Process custom."""
 
     custom_selectors = {}
@@ -316,7 +317,7 @@ class SelectorPattern:
 
         return self.name
 
-    def match(self, selector: str, index: int, flags: int) -> Optional[Match[str]]:
+    def match(self, selector: str, index: int, flags: int) -> Match[str] | None:
         """Match the selector."""
 
         return self.re_pattern.match(selector, index)
@@ -325,7 +326,7 @@ class SelectorPattern:
 class SpecialPseudoPattern(SelectorPattern):
     """Selector pattern."""
 
-    def __init__(self, patterns: Tuple[Tuple[str, Tuple[str, ...], str, Type[SelectorPattern]], ...]) -> None:
+    def __init__(self, patterns: tuple[tuple[str, tuple[str, ...], str, type[SelectorPattern]], ...]) -> None:
         """Initialize."""
 
         self.patterns = {}
@@ -335,7 +336,7 @@ class SpecialPseudoPattern(SelectorPattern):
             for pseudo in p[1]:
                 self.patterns[pseudo] = pattern
 
-        self.matched_name = None  # type: Optional[SelectorPattern]
+        self.matched_name = None  # type: SelectorPattern | None
         self.re_pseudo_name = re.compile(PAT_PSEUDO_CLASS_SPECIAL, re.I | re.X | re.U)
 
     def get_name(self) -> str:
@@ -343,7 +344,7 @@ class SpecialPseudoPattern(SelectorPattern):
 
         return '' if self.matched_name is None else self.matched_name.get_name()
 
-    def match(self, selector: str, index: int, flags: int) -> Optional[Match[str]]:
+    def match(self, selector: str, index: int, flags: int) -> Match[str] | None:
         """Match the selector."""
 
         pseudo = None
@@ -371,20 +372,20 @@ class _Selector:
     def __init__(self, **kwargs: Any) -> None:
         """Initialize."""
 
-        self.tag = kwargs.get('tag', None)  # type: Optional[ct.SelectorTag]
-        self.ids = kwargs.get('ids', [])  # type: List[str]
-        self.classes = kwargs.get('classes', [])  # type: List[str]
-        self.attributes = kwargs.get('attributes', [])  # type: List[ct.SelectorAttribute]
-        self.nth = kwargs.get('nth', [])  # type: List[ct.SelectorNth]
-        self.selectors = kwargs.get('selectors', [])  # type: List[ct.SelectorList]
-        self.relations = kwargs.get('relations', [])  # type: List[_Selector]
-        self.rel_type = kwargs.get('rel_type', None)  # type: Optional[str]
-        self.contains = kwargs.get('contains', [])  # type: List[ct.SelectorContains]
-        self.lang = kwargs.get('lang', [])  # type: List[ct.SelectorLang]
+        self.tag = kwargs.get('tag', None)  # type: ct.SelectorTag | None
+        self.ids = kwargs.get('ids', [])  # type: list[str]
+        self.classes = kwargs.get('classes', [])  # type: list[str]
+        self.attributes = kwargs.get('attributes', [])  # type: list[ct.SelectorAttribute]
+        self.nth = kwargs.get('nth', [])  # type: list[ct.SelectorNth]
+        self.selectors = kwargs.get('selectors', [])  # type: list[ct.SelectorList]
+        self.relations = kwargs.get('relations', [])  # type: list[_Selector]
+        self.rel_type = kwargs.get('rel_type', None)  # type: str | None
+        self.contains = kwargs.get('contains', [])  # type: list[ct.SelectorContains]
+        self.lang = kwargs.get('lang', [])  # type: list[ct.SelectorLang]
         self.flags = kwargs.get('flags', 0)  # type: int
         self.no_match = kwargs.get('no_match', False)  # type: bool
 
-    def _freeze_relations(self, relations: List['_Selector']) -> ct.SelectorList:
+    def _freeze_relations(self, relations: list[_Selector]) -> ct.SelectorList:
         """Freeze relation."""
 
         if relations:
@@ -394,7 +395,7 @@ class _Selector:
         else:
             return ct.SelectorList()
 
-    def freeze(self) -> Union[ct.Selector, ct.SelectorNull]:
+    def freeze(self) -> ct.Selector | ct.SelectorNull:
         """Freeze self."""
 
         if self.no_match:
@@ -461,7 +462,7 @@ class CSSParser:
     def __init__(
         self,
         selector: str,
-        custom: Optional[Dict[str, Union[str, ct.SelectorList]]] = None,
+        custom: dict[str, str | ct.SelectorList] | None = None,
         flags: int = 0
     ) -> None:
         """Initialize."""
@@ -583,9 +584,9 @@ class CSSParser:
         sel: _Selector,
         m: Match[str],
         has_selector: bool,
-        iselector: Iterator[Tuple[str, Match[str]]],
+        iselector: Iterator[tuple[str, Match[str]]],
         is_html: bool
-    ) -> Tuple[bool, bool]:
+    ) -> tuple[bool, bool]:
         """Parse pseudo class."""
 
         complex_pseudo = False
@@ -678,7 +679,7 @@ class CSSParser:
         sel: _Selector,
         m: Match[str],
         has_selector: bool,
-        iselector: Iterator[Tuple[str, Match[str]]]
+        iselector: Iterator[tuple[str, Match[str]]]
     ) -> bool:
         """Parse `nth` pseudo."""
 
@@ -743,7 +744,7 @@ class CSSParser:
         sel: _Selector,
         name: str,
         has_selector: bool,
-        iselector: Iterator[Tuple[str, Match[str]]],
+        iselector: Iterator[tuple[str, Match[str]]],
         index: int
     ) -> bool:
         """Parse pseudo with opening bracket."""
@@ -752,7 +753,7 @@ class CSSParser:
         if name == ':not':
             flags |= FLG_NOT
         elif name == ':has':
-            flags |= FLG_RELATIVE | FLG_FORGIVE
+            flags |= FLG_RELATIVE
         elif name in (':where', ':is'):
             flags |= FLG_FORGIVE
 
@@ -766,21 +767,16 @@ class CSSParser:
         sel: _Selector,
         m: Match[str],
         has_selector: bool,
-        selectors: List[_Selector],
+        selectors: list[_Selector],
         rel_type: str,
         index: int
-    ) -> Tuple[bool, _Selector, str]:
+    ) -> tuple[bool, _Selector, str]:
         """Parse combinator tokens."""
 
         combinator = m.group('relation').strip()
         if not combinator:
             combinator = WS_COMBINATOR
         if combinator == COMMA_COMBINATOR:
-            if not has_selector:
-                # If we've not captured any selector parts, the comma is either at the beginning of the pattern
-                # or following another comma, both of which are unexpected. But shouldn't fail the pseudo-class.
-                sel.no_match = True
-
             sel.rel_type = rel_type
             selectors[-1].relations.append(sel)
             rel_type = ":" + WS_COMBINATOR
@@ -814,12 +810,12 @@ class CSSParser:
         sel: _Selector,
         m: Match[str],
         has_selector: bool,
-        selectors: List[_Selector],
-        relations: List[_Selector],
+        selectors: list[_Selector],
+        relations: list[_Selector],
         is_pseudo: bool,
         is_forgive: bool,
         index: int
-    ) -> Tuple[bool, _Selector]:
+    ) -> tuple[bool, _Selector]:
         """Parse combinator tokens."""
 
         combinator = m.group('relation').strip()
@@ -924,7 +920,7 @@ class CSSParser:
 
     def parse_selectors(
         self,
-        iselector: Iterator[Tuple[str, Match[str]]],
+        iselector: Iterator[tuple[str, Match[str]]],
         index: int = 0,
         flags: int = 0
     ) -> ct.SelectorList:
@@ -935,7 +931,7 @@ class CSSParser:
         selectors = []
         has_selector = False
         closed = False
-        relations = []  # type: List[_Selector]
+        relations = []  # type: list[_Selector]
         rel_type = ":" + WS_COMBINATOR
 
         # Setup various flags
@@ -1069,22 +1065,12 @@ class CSSParser:
                 selectors.append(sel)
 
         # Forgive empty slots in pseudo-classes that have lists (and are forgiving)
-        elif is_forgive:
-            if is_relative:
-                # Handle relative selectors pseudo-classes with empty slots like `:has()`
-                if selectors and selectors[-1].rel_type is None and rel_type == ': ':
-                    sel.rel_type = rel_type
-                    sel.no_match = True
-                    selectors[-1].relations.append(sel)
-                    has_selector = True
-            else:
-                # Handle normal pseudo-classes with empty slots
-                if not selectors or not relations:
-                    # Others like `:is()` etc.
-                    sel.no_match = True
-                    del relations[:]
-                    selectors.append(sel)
-                    has_selector = True
+        elif is_forgive and (not selectors or not relations):
+            # Handle normal pseudo-classes with empty slots like `:is()` etc.
+            sel.no_match = True
+            del relations[:]
+            selectors.append(sel)
+            has_selector = True
 
         if not has_selector:
             # We will always need to finish a selector when `:has()` is used as it leads with combining.
@@ -1112,7 +1098,7 @@ class CSSParser:
         # Return selector list
         return ct.SelectorList([s.freeze() for s in selectors], is_not, is_html)
 
-    def selector_iter(self, pattern: str) -> Iterator[Tuple[str, Match[str]]]:
+    def selector_iter(self, pattern: str) -> Iterator[tuple[str, Match[str]]]:
         """Iterate selector tokens."""
 
         # Ignore whitespace and comments at start and end of pattern

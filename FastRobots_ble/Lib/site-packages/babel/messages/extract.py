@@ -12,22 +12,69 @@
     The main entry points into the extraction functionality are the functions
     `extract_from_dir` and `extract_from_file`.
 
-    :copyright: (c) 2013-2022 by the Babel Team.
+    :copyright: (c) 2013-2023 by the Babel Team.
     :license: BSD, see LICENSE for more details.
 """
+from __future__ import annotations
+
 import ast
+import io
 import os
-from os.path import relpath
 import sys
-from tokenize import generate_tokens, COMMENT, NAME, OP, STRING
+from collections.abc import (
+    Callable,
+    Collection,
+    Generator,
+    Iterable,
+    Mapping,
+    MutableSequence,
+)
+from os.path import relpath
+from textwrap import dedent
+from tokenize import COMMENT, NAME, OP, STRING, generate_tokens
+from typing import TYPE_CHECKING, Any
 
 from babel.util import parse_encoding, parse_future_flags, pathmatch
-from textwrap import dedent
 
+if TYPE_CHECKING:
+    from typing import IO, Protocol
 
-GROUP_NAME = 'babel.extractors'
+    from _typeshed import SupportsItems, SupportsRead, SupportsReadline
+    from typing_extensions import Final, TypeAlias, TypedDict
 
-DEFAULT_KEYWORDS = {
+    class _PyOptions(TypedDict, total=False):
+        encoding: str
+
+    class _JSOptions(TypedDict, total=False):
+        encoding: str
+        jsx: bool
+        template_string: bool
+        parse_template_string: bool
+
+    class _FileObj(SupportsRead[bytes], SupportsReadline[bytes], Protocol):
+        def seek(self, __offset: int, __whence: int = ...) -> int: ...
+        def tell(self) -> int: ...
+
+    _Keyword: TypeAlias = tuple[int | tuple[int, int] | tuple[int, str], ...] | None
+
+    # 5-tuple of (filename, lineno, messages, comments, context)
+    _FileExtractionResult: TypeAlias = tuple[str, int, str | tuple[str, ...], list[str], str | None]
+
+    # 4-tuple of (lineno, message, comments, context)
+    _ExtractionResult: TypeAlias = tuple[int, str | tuple[str, ...], list[str], str | None]
+
+    # Required arguments: fileobj, keywords, comment_tags, options
+    # Return value: Iterable of (lineno, message, comments, context)
+    _CallableExtractionMethod: TypeAlias = Callable[
+        [_FileObj | IO[bytes], Mapping[str, _Keyword], Collection[str], Mapping[str, Any]],
+        Iterable[_ExtractionResult],
+    ]
+
+    _ExtractionMethod: TypeAlias = _CallableExtractionMethod | str
+
+GROUP_NAME: Final[str] = 'babel.extractors'
+
+DEFAULT_KEYWORDS: dict[str, _Keyword] = {
     '_': None,
     'gettext': None,
     'ngettext': (1, 2),
@@ -40,18 +87,14 @@ DEFAULT_KEYWORDS = {
     'npgettext': ((1, 'c'), 2, 3)
 }
 
-DEFAULT_MAPPING = [('**.py', 'python')]
-
-empty_msgid_warning = (
-    '%s: warning: Empty msgid.  It is reserved by GNU gettext: gettext("") '
-    'returns the header entry with meta information, not the empty string.')
+DEFAULT_MAPPING: list[tuple[str, str]] = [('**.py', 'python')]
 
 
-def _strip_comment_tags(comments, tags):
+def _strip_comment_tags(comments: MutableSequence[str], tags: Iterable[str]):
     """Helper function for `extract` that strips comment tags from strings
     in a list of comment lines.  This functions operates in-place.
     """
-    def _strip(line):
+    def _strip(line: str):
         for tag in tags:
             if line.startswith(tag):
                 return line[len(tag):].strip()
@@ -59,22 +102,22 @@ def _strip_comment_tags(comments, tags):
     comments[:] = map(_strip, comments)
 
 
-def default_directory_filter(dirpath):
+def default_directory_filter(dirpath: str | os.PathLike[str]) -> bool:
     subdir = os.path.basename(dirpath)
     # Legacy default behavior: ignore dot and underscore directories
     return not (subdir.startswith('.') or subdir.startswith('_'))
 
 
 def extract_from_dir(
-    dirname=None,
-    method_map=DEFAULT_MAPPING,
-    options_map=None,
-    keywords=DEFAULT_KEYWORDS,
-    comment_tags=(),
-    callback=None,
-    strip_comment_tags=False,
-    directory_filter=None,
-):
+    dirname: str | os.PathLike[str] | None = None,
+    method_map: Iterable[tuple[str, str]] = DEFAULT_MAPPING,
+    options_map: SupportsItems[str, dict[str, Any]] | None = None,
+    keywords: Mapping[str, _Keyword] = DEFAULT_KEYWORDS,
+    comment_tags: Collection[str] = (),
+    callback: Callable[[str, str, dict[str, Any]], object] | None = None,
+    strip_comment_tags: bool = False,
+    directory_filter: Callable[[str], bool] | None = None,
+) -> Generator[_FileExtractionResult, None, None]:
     """Extract messages from any source files found in the given directory.
 
     This function generates tuples of the form ``(filename, lineno, message,
@@ -174,9 +217,16 @@ def extract_from_dir(
             )
 
 
-def check_and_call_extract_file(filepath, method_map, options_map,
-                                callback, keywords, comment_tags,
-                                strip_comment_tags, dirpath=None):
+def check_and_call_extract_file(
+    filepath: str | os.PathLike[str],
+    method_map: Iterable[tuple[str, str]],
+    options_map: SupportsItems[str, dict[str, Any]],
+    callback: Callable[[str, str, dict[str, Any]], object] | None,
+    keywords: Mapping[str, _Keyword],
+    comment_tags: Collection[str],
+    strip_comment_tags: bool,
+    dirpath: str | os.PathLike[str] | None = None,
+) -> Generator[_FileExtractionResult, None, None]:
     """Checks if the given file matches an extraction method mapping, and if so, calls extract_from_file.
 
     Note that the extraction method mappings are based relative to dirpath.
@@ -226,13 +276,19 @@ def check_and_call_extract_file(filepath, method_map, options_map,
             options=options,
             strip_comment_tags=strip_comment_tags
         ):
-            yield (filename, ) + message_tuple
+            yield (filename, *message_tuple)
 
         break
 
 
-def extract_from_file(method, filename, keywords=DEFAULT_KEYWORDS,
-                      comment_tags=(), options=None, strip_comment_tags=False):
+def extract_from_file(
+    method: _ExtractionMethod,
+    filename: str | os.PathLike[str],
+    keywords: Mapping[str, _Keyword] = DEFAULT_KEYWORDS,
+    comment_tags: Collection[str] = (),
+    options: Mapping[str, Any] | None = None,
+    strip_comment_tags: bool = False,
+) -> list[_ExtractionResult]:
     """Extract messages from a specific file.
 
     This function returns a list of tuples of the form ``(lineno, message, comments, context)``.
@@ -259,8 +315,14 @@ def extract_from_file(method, filename, keywords=DEFAULT_KEYWORDS,
                             options, strip_comment_tags))
 
 
-def extract(method, fileobj, keywords=DEFAULT_KEYWORDS, comment_tags=(),
-            options=None, strip_comment_tags=False):
+def extract(
+    method: _ExtractionMethod,
+    fileobj: _FileObj,
+    keywords: Mapping[str, _Keyword] = DEFAULT_KEYWORDS,
+    comment_tags: Collection[str] = (),
+    options: Mapping[str, Any] | None = None,
+    strip_comment_tags: bool = False,
+) -> Generator[_ExtractionResult, None, None]:
     """Extract messages from the given file-like object using the specified
     extraction method.
 
@@ -332,16 +394,13 @@ def extract(method, fileobj, keywords=DEFAULT_KEYWORDS, comment_tags=(),
             func = builtin.get(method)
 
     if func is None:
-        raise ValueError('Unknown extraction method %r' % method)
+        raise ValueError(f"Unknown extraction method {method!r}")
 
     results = func(fileobj, keywords.keys(), comment_tags,
                    options=options or {})
 
     for lineno, funcname, messages, comments in results:
-        if funcname:
-            spec = keywords[funcname] or (1,)
-        else:
-            spec = (1,)
+        spec = keywords[funcname] or (1,) if funcname else (1,)
         if not isinstance(messages, (list, tuple)):
             messages = [messages]
         if not messages:
@@ -377,9 +436,11 @@ def extract(method, fileobj, keywords=DEFAULT_KEYWORDS, comment_tags=(),
             first_msg_index = spec[0] - 1
         if not messages[first_msg_index]:
             # An empty string msgid isn't valid, emit a warning
-            where = '%s:%i' % (hasattr(fileobj, 'name') and
-                               fileobj.name or '(unknown)', lineno)
-            sys.stderr.write((empty_msgid_warning % where) + '\n')
+            filename = (getattr(fileobj, "name", None) or "(unknown)")
+            sys.stderr.write(
+                f"{filename}:{lineno}: warning: Empty msgid.  It is reserved by GNU gettext: gettext(\"\") "
+                f"returns the header entry with meta information, not the empty string.\n"
+            )
             continue
 
         messages = tuple(msgs)
@@ -391,14 +452,24 @@ def extract(method, fileobj, keywords=DEFAULT_KEYWORDS, comment_tags=(),
         yield lineno, messages, comments, context
 
 
-def extract_nothing(fileobj, keywords, comment_tags, options):
+def extract_nothing(
+    fileobj: _FileObj,
+    keywords: Mapping[str, _Keyword],
+    comment_tags: Collection[str],
+    options: Mapping[str, Any],
+) -> list[_ExtractionResult]:
     """Pseudo extractor that does not actually extract anything, but simply
     returns an empty list.
     """
     return []
 
 
-def extract_python(fileobj, keywords, comment_tags, options):
+def extract_python(
+    fileobj: IO[bytes],
+    keywords: Mapping[str, _Keyword],
+    comment_tags: Collection[str],
+    options: _PyOptions,
+) -> Generator[_ExtractionResult, None, None]:
     """Extract messages from Python source code.
 
     It returns an iterator yielding tuples in the following form ``(lineno,
@@ -466,12 +537,9 @@ def extract_python(fileobj, keywords, comment_tags, options):
                 else:
                     messages.append(None)
 
-                if len(messages) > 1:
-                    messages = tuple(messages)
-                else:
-                    messages = messages[0]
-                # Comments don't apply unless they immediately preceed the
-                # message
+                messages = tuple(messages) if len(messages) > 1 else messages[0]
+                # Comments don't apply unless they immediately
+                # precede the message
                 if translator_comments and \
                         translator_comments[-1][0] < message_lineno - 1:
                     translator_comments = []
@@ -511,7 +579,7 @@ def extract_python(fileobj, keywords, comment_tags, options):
             funcname = value
 
 
-def _parse_python_string(value, encoding, future_flags):
+def _parse_python_string(value: str, encoding: str, future_flags: int) -> str | None:
     # Unwrap quotes in a safe manner, maintaining the string's encoding
     # https://sourceforge.net/tracker/?func=detail&atid=355470&aid=617979&group_id=5470
     code = compile(
@@ -533,7 +601,13 @@ def _parse_python_string(value, encoding, future_flags):
     return None
 
 
-def extract_javascript(fileobj, keywords, comment_tags, options):
+def extract_javascript(
+    fileobj: _FileObj,
+    keywords: Mapping[str, _Keyword],
+    comment_tags: Collection[str],
+    options: _JSOptions,
+    lineno: int = 1,
+) -> Generator[_ExtractionResult, None, None]:
     """Extract messages from JavaScript source code.
 
     :param fileobj: the seekable, file-like object the messages should be
@@ -545,7 +619,11 @@ def extract_javascript(fileobj, keywords, comment_tags, options):
     :param options: a dictionary of additional options (optional)
                     Supported options are:
                     * `jsx` -- set to false to disable JSX/E4X support.
-                    * `template_string` -- set to false to disable ES6 template string support.
+                    * `template_string` -- if `True`, supports gettext(`key`)
+                    * `parse_template_string` -- if `True` will parse the
+                                                 contents of javascript
+                                                 template strings.
+    :param lineno: line number offset (for parsing embedded fragments)
     """
     from babel.messages.jslexer import Token, tokenize, unquote_string
     funcname = message_lineno = None
@@ -557,12 +635,12 @@ def extract_javascript(fileobj, keywords, comment_tags, options):
     last_token = None
     call_stack = -1
     dotted = any('.' in kw for kw in keywords)
-
     for token in tokenize(
         fileobj.read().decode(encoding),
         jsx=options.get("jsx", True),
         template_string=options.get("template_string", True),
-        dotted=dotted
+        dotted=dotted,
+        lineno=lineno
     ):
         if (  # Turn keyword`foo` expressions into keyword("foo") calls:
             funcname and  # have a keyword...
@@ -574,7 +652,10 @@ def extract_javascript(fileobj, keywords, comment_tags, options):
             call_stack = 0
             token = Token('operator', ')', token.lineno)
 
-        if token.type == 'operator' and token.value == '(':
+        if options.get('parse_template_string') and not funcname and token.type == 'template_string':
+            yield from parse_template_string(token.value, keywords, comment_tags, options, token.lineno)
+
+        elif token.type == 'operator' and token.value == '(':
             if funcname:
                 message_lineno = token.lineno
                 call_stack += 1
@@ -592,7 +673,7 @@ def extract_javascript(fileobj, keywords, comment_tags, options):
                     break
 
         elif token.type == 'multilinecomment':
-            # only one multi-line comment may preceed a translation
+            # only one multi-line comment may precede a translation
             translator_comments = []
             value = token.value[2:-2].strip()
             for comment_tag in comment_tags:
@@ -666,3 +747,46 @@ def extract_javascript(fileobj, keywords, comment_tags, options):
             funcname = token.value
 
         last_token = token
+
+
+def parse_template_string(
+    template_string: str,
+    keywords: Mapping[str, _Keyword],
+    comment_tags: Collection[str],
+    options: _JSOptions,
+    lineno: int = 1,
+) -> Generator[_ExtractionResult, None, None]:
+    """Parse JavaScript template string.
+
+    :param template_string: the template string to be parsed
+    :param keywords: a list of keywords (i.e. function names) that should be
+                     recognized as translation functions
+    :param comment_tags: a list of translator tags to search for and include
+                         in the results
+    :param options: a dictionary of additional options (optional)
+    :param lineno: starting line number (optional)
+    """
+    from babel.messages.jslexer import line_re
+    prev_character = None
+    level = 0
+    inside_str = False
+    expression_contents = ''
+    for character in template_string[1:-1]:
+        if not inside_str and character in ('"', "'", '`'):
+            inside_str = character
+        elif inside_str == character and prev_character != r'\\':
+            inside_str = False
+        if level:
+            expression_contents += character
+        if not inside_str:
+            if character == '{' and prev_character == '$':
+                level += 1
+            elif level and character == '}':
+                level -= 1
+                if level == 0 and expression_contents:
+                    expression_contents = expression_contents[0:-1]
+                    fake_file_obj = io.BytesIO(expression_contents.encode())
+                    yield from extract_javascript(fake_file_obj, keywords, comment_tags, options, lineno)
+                    lineno += len(line_re.findall(expression_contents))
+                    expression_contents = ''
+        prev_character = character

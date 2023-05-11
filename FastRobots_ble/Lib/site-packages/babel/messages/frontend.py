@@ -4,10 +4,11 @@
 
     Frontends for the message extraction functionality.
 
-    :copyright: (c) 2013-2022 by the Babel Team.
+    :copyright: (c) 2013-2023 by the Babel Team.
     :license: BSD, see LICENSE for more details.
 """
 
+import datetime
 import fnmatch
 import logging
 import optparse
@@ -18,14 +19,19 @@ import sys
 import tempfile
 from collections import OrderedDict
 from configparser import RawConfigParser
-from datetime import datetime
 from io import StringIO
+from typing import Iterable
 
-from babel import __version__ as VERSION
 from babel import Locale, localedata
+from babel import __version__ as VERSION
 from babel.core import UnknownLocaleError
-from babel.messages.catalog import Catalog, DEFAULT_HEADER
-from babel.messages.extract import DEFAULT_KEYWORDS, DEFAULT_MAPPING, check_and_call_extract_file, extract_from_dir
+from babel.messages.catalog import DEFAULT_HEADER, Catalog
+from babel.messages.extract import (
+    DEFAULT_KEYWORDS,
+    DEFAULT_MAPPING,
+    check_and_call_extract_file,
+    extract_from_dir,
+)
 from babel.messages.mofile import write_mo
 from babel.messages.pofile import read_po, write_po
 from babel.util import LOCALTZ
@@ -38,15 +44,16 @@ try:
     distutils_log = log  # "distutils.log → (no replacement yet)"
 
     try:
-        from setuptools.errors import OptionError, SetupError, BaseError
+        from setuptools.errors import BaseError, OptionError, SetupError
     except ImportError:  # Error aliases only added in setuptools 59 (2021-11).
         OptionError = SetupError = BaseError = Exception
 
 except ImportError:
     from distutils import log as distutils_log
     from distutils.cmd import Command as _Command
-    from distutils.errors import DistutilsOptionError as OptionError, DistutilsSetupError as SetupError, DistutilsError as BaseError
-
+    from distutils.errors import DistutilsError as BaseError
+    from distutils.errors import DistutilsOptionError as OptionError
+    from distutils.errors import DistutilsSetupError as SetupError
 
 
 def listify_value(arg, split=None):
@@ -188,10 +195,10 @@ class compile_catalog(Command):
     def run(self):
         n_errors = 0
         for domain in self.domain:
-            for catalog, errors in self._run_domain(domain).items():
+            for errors in self._run_domain(domain).values():
                 n_errors += len(errors)
         if n_errors:
-            self.log.error('%d errors encountered.' % n_errors)
+            self.log.error('%d errors encountered.', n_errors)
         return (1 if n_errors else 0)
 
     def _run_domain(self, domain):
@@ -203,19 +210,19 @@ class compile_catalog(Command):
                 po_files.append((self.locale,
                                  os.path.join(self.directory, self.locale,
                                               'LC_MESSAGES',
-                                              domain + '.po')))
+                                              f"{domain}.po")))
                 mo_files.append(os.path.join(self.directory, self.locale,
                                              'LC_MESSAGES',
-                                             domain + '.mo'))
+                                             f"{domain}.mo"))
             else:
                 for locale in os.listdir(self.directory):
                     po_file = os.path.join(self.directory, locale,
-                                           'LC_MESSAGES', domain + '.po')
+                                           'LC_MESSAGES', f"{domain}.po")
                     if os.path.exists(po_file):
                         po_files.append((locale, po_file))
                         mo_files.append(os.path.join(self.directory, locale,
                                                      'LC_MESSAGES',
-                                                     domain + '.mo'))
+                                                     f"{domain}.mo"))
         else:
             po_files.append((self.locale, self.input_file))
             if self.output_file:
@@ -223,7 +230,7 @@ class compile_catalog(Command):
             else:
                 mo_files.append(os.path.join(self.directory, self.locale,
                                              'LC_MESSAGES',
-                                             domain + '.mo'))
+                                             f"{domain}.mo"))
 
         if not po_files:
             raise OptionError('no message catalogs found')
@@ -405,10 +412,7 @@ class extract_messages(Command):
                     'input-dirs and input-paths are mutually exclusive'
                 )
 
-        if self.no_default_keywords:
-            keywords = {}
-        else:
-            keywords = DEFAULT_KEYWORDS.copy()
+        keywords = {} if self.no_default_keywords else DEFAULT_KEYWORDS.copy()
 
         keywords.update(parse_keywords(listify_value(self.keywords)))
 
@@ -451,7 +455,7 @@ class extract_messages(Command):
 
         for path in self.input_paths:
             if not os.path.exists(path):
-                raise OptionError("Input path: %s does not exist" % path)
+                raise OptionError(f"Input path: {path} does not exist")
 
         self.add_comments = listify_value(self.add_comments or (), ",")
 
@@ -472,6 +476,27 @@ class extract_messages(Command):
         else:
             self.directory_filter = None
 
+    def _build_callback(self, path: str):
+        def callback(filename: str, method: str, options: dict):
+            if method == 'ignore':
+                return
+
+            # If we explicitly provide a full filepath, just use that.
+            # Otherwise, path will be the directory path and filename
+            # is the relative path from that dir to the file.
+            # So we can join those to get the full filepath.
+            if os.path.isfile(path):
+                filepath = path
+            else:
+                filepath = os.path.normpath(os.path.join(path, filename))
+
+            optstr = ''
+            if options:
+                opt_values = ", ".join(f'{k}="{v}"' for k, v in options.items())
+                optstr = f" ({opt_values})"
+            self.log.info('extracting messages from %s%s', filepath, optstr)
+        return callback
+
     def run(self):
         mappings = self._get_mappings()
         with open(self.output_file, 'wb') as outfile:
@@ -483,25 +508,7 @@ class extract_messages(Command):
                               header_comment=(self.header_comment or DEFAULT_HEADER))
 
             for path, method_map, options_map in mappings:
-                def callback(filename, method, options):
-                    if method == 'ignore':
-                        return
-
-                    # If we explicitly provide a full filepath, just use that.
-                    # Otherwise, path will be the directory path and filename
-                    # is the relative path from that dir to the file.
-                    # So we can join those to get the full filepath.
-                    if os.path.isfile(path):
-                        filepath = path
-                    else:
-                        filepath = os.path.normpath(os.path.join(path, filename))
-
-                    optstr = ''
-                    if options:
-                        optstr = ' (%s)' % ', '.join(['%s="%s"' % (k, v) for
-                                                      k, v in options.items()])
-                    self.log.info('extracting messages from %s%s', filepath, optstr)
-
+                callback = self._build_callback(path)
                 if os.path.isfile(path):
                     current_dir = os.getcwd()
                     extracted = check_and_call_extract_file(
@@ -640,7 +647,7 @@ class init_catalog(Command):
             raise OptionError('you must specify the output directory')
         if not self.output_file:
             self.output_file = os.path.join(self.output_dir, self.locale,
-                                            'LC_MESSAGES', self.domain + '.po')
+                                            'LC_MESSAGES', f"{self.domain}.po")
 
         if not os.path.exists(os.path.dirname(self.output_file)):
             os.makedirs(os.path.dirname(self.output_file))
@@ -662,7 +669,7 @@ class init_catalog(Command):
             catalog = read_po(infile, locale=self.locale)
 
         catalog.locale = self._locale
-        catalog.revision_date = datetime.now(LOCALTZ)
+        catalog.revision_date = datetime.datetime.now(LOCALTZ)
         catalog.fuzzy = False
 
         with open(self.output_file, 'wb') as outfile:
@@ -782,12 +789,12 @@ class update_catalog(Command):
                 po_files.append((self.locale,
                                  os.path.join(self.output_dir, self.locale,
                                               'LC_MESSAGES',
-                                              self.domain + '.po')))
+                                              f"{self.domain}.po")))
             else:
                 for locale in os.listdir(self.output_dir):
                     po_file = os.path.join(self.output_dir, locale,
                                            'LC_MESSAGES',
-                                           self.domain + '.po')
+                                           f"{self.domain}.po")
                     if os.path.exists(po_file):
                         po_files.append((locale, po_file))
         else:
@@ -818,7 +825,7 @@ class update_catalog(Command):
                     catalog = read_po(infile, locale=self.locale)
 
                 catalog.locale = self._locale
-                catalog.revision_date = datetime.now(LOCALTZ)
+                catalog.revision_date = datetime.datetime.now(LOCALTZ)
                 catalog.fuzzy = False
 
                 with open(filename, 'wb') as outfile:
@@ -842,7 +849,7 @@ class update_catalog(Command):
                              omit_header=self.omit_header,
                              ignore_obsolete=self.ignore_obsolete,
                              include_previous=self.previous, width=self.width)
-            except:
+            except Exception:
                 os.remove(tmpname)
                 raise
 
@@ -889,7 +896,7 @@ class CommandLineInterface:
     """
 
     usage = '%%prog %s [options] %s'
-    version = '%%prog %s' % VERSION
+    version = f'%prog {VERSION}'
     commands = {
         'compile': 'compile message catalogs to MO files',
         'extract': 'extract messages from source files and generate a POT file',
@@ -935,12 +942,10 @@ class CommandLineInterface:
         self._configure_logging(options.loglevel)
         if options.list_locales:
             identifiers = localedata.locale_identifiers()
-            longest = max(len(identifier) for identifier in identifiers)
-            identifiers.sort()
-            format = u'%%-%ds %%s' % (longest + 1)
-            for identifier in identifiers:
+            id_width = max(len(identifier) for identifier in identifiers) + 1
+            for identifier in sorted(identifiers):
                 locale = Locale.parse(identifier)
-                print(format % (identifier, locale.english_name))
+                print(f"{identifier:<{id_width}} {locale.english_name}")
             return 0
 
         if not args:
@@ -949,7 +954,7 @@ class CommandLineInterface:
 
         cmdname = args[0]
         if cmdname not in self.commands:
-            self.parser.error('unknown command "%s"' % cmdname)
+            self.parser.error(f'unknown command "{cmdname}"')
 
         cmdinst = self._configure_command(cmdname, args[1:])
         return cmdinst.run()
@@ -972,11 +977,9 @@ class CommandLineInterface:
     def _help(self):
         print(self.parser.format_help())
         print("commands:")
-        longest = max(len(command) for command in self.commands)
-        format = "  %%-%ds %%s" % max(8, longest + 1)
-        commands = sorted(self.commands.items())
-        for name, description in commands:
-            print(format % (name, description))
+        cmd_width = max(8, max(len(command) for command in self.commands) + 1)
+        for name, description in sorted(self.commands.items()):
+            print(f"  {name:<{cmd_width}} {description}")
 
     def _configure_command(self, cmdname, argv):
         """
@@ -997,14 +1000,14 @@ class CommandLineInterface:
         as_args = getattr(cmdclass, "as_args", ())
         for long, short, help in cmdclass.user_options:
             name = long.strip("=")
-            default = getattr(cmdinst, name.replace('-', '_'))
-            strs = ["--%s" % name]
+            default = getattr(cmdinst, name.replace("-", "_"))
+            strs = [f"--{name}"]
             if short:
-                strs.append("-%s" % short)
+                strs.append(f"-{short}")
             strs.extend(cmdclass.option_aliases.get(name, ()))
             choices = cmdclass.option_choices.get(name, None)
             if name == as_args:
-                parser.usage += "<%s>" % name
+                parser.usage += f"<{name}>"
             elif name in cmdclass.boolean_options:
                 parser.add_option(*strs, action="store_true", help=help)
             elif name in cmdclass.multiple_value_options:
@@ -1105,7 +1108,7 @@ def parse_mapping(fileobj, filename=None):
     return method_map, options_map
 
 
-def parse_keywords(strings=[]):
+def parse_keywords(strings: Iterable[str] = ()):
     """Parse keywords specifications from the given list of strings.
 
     >>> kw = sorted(parse_keywords(['_', 'dgettext:2', 'dngettext:2,3', 'pgettext:1c,2']).items())

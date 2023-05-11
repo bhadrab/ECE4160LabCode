@@ -4,21 +4,22 @@
 
     Plural form definitions.
 
-    :copyright: (c) 2013-2022 by the Babel Team.
+    :copyright: (c) 2013-2023 by the Babel Team.
     :license: BSD, see LICENSE for more details.
 """
+from __future__ import annotations
 
-from babel.core import default_locale, Locale
 from operator import itemgetter
 
+from babel.core import Locale, default_locale
 
 # XXX: remove this file, duplication with babel.plural
 
 
-LC_CTYPE = default_locale('LC_CTYPE')
+LC_CTYPE: str | None = default_locale('LC_CTYPE')
 
 
-PLURALS = {
+PLURALS: dict[str, tuple[int, str]] = {
     # Afar
     # 'aa': (),
     # Abkhazian
@@ -201,7 +202,7 @@ PLURALS = {
 }
 
 
-DEFAULT_PLURAL = (2, '(n != 1)')
+DEFAULT_PLURAL: tuple[int, str] = (2, '(n != 1)')
 
 
 class _PluralTuple(tuple):
@@ -215,11 +216,11 @@ class _PluralTuple(tuple):
     plural_forms = property(lambda x: 'nplurals=%s; plural=%s;' % x, doc="""
     The plural expression used by the catalog or locale.""")
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.plural_forms
 
 
-def get_plural(locale=LC_CTYPE):
+def get_plural(locale: str | None = LC_CTYPE) -> _PluralTuple:
     """A tuple with the information catalogs need to perform proper
     pluralization.  The first item of the tuple is the number of plural
     forms, the second the plural expression.

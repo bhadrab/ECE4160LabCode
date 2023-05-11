@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     babel.messages.jslexer
     ~~~~~~~~~~~~~~~~~~~~~~
@@ -6,20 +5,23 @@
     A simple JavaScript 1.5 lexer which is used for the JavaScript
     extractor.
 
-    :copyright: (c) 2013-2022 by the Babel Team.
+    :copyright: (c) 2013-2023 by the Babel Team.
     :license: BSD, see LICENSE for more details.
 """
-from collections import namedtuple
-import re
+from __future__ import annotations
 
-operators = sorted([
+import re
+from collections.abc import Generator
+from typing import NamedTuple
+
+operators: list[str] = sorted([
     '+', '-', '*', '%', '!=', '==', '<', '>', '<=', '>=', '=',
     '+=', '-=', '*=', '%=', '<<', '>>', '>>>', '<<=', '>>=',
     '>>>=', '&', '&=', '|', '|=', '&&', '||', '^', '^=', '(', ')',
     '[', ']', '{', '}', '!', '--', '++', '~', ',', ';', '.', ':'
 ], key=len, reverse=True)
 
-escapes = {'b': '\b', 'f': '\f', 'n': '\n', 'r': '\r', 't': '\t'}
+escapes: dict[str, str] = {'b': '\b', 'f': '\f', 'n': '\n', 'r': '\r', 't': '\t'}
 
 name_re = re.compile(r'[\w$_][\w\d$_]*', re.UNICODE)
 dotted_name_re = re.compile(r'[\w$_][\w\d$_.]*[\w\d$_.]', re.UNICODE)
@@ -30,9 +32,14 @@ line_join_re = re.compile(r'\\' + line_re.pattern)
 uni_escape_re = re.compile(r'[a-fA-F0-9]{1,4}')
 hex_escape_re = re.compile(r'[a-fA-F0-9]{1,2}')
 
-Token = namedtuple('Token', 'type value lineno')
 
-_rules = [
+class Token(NamedTuple):
+    type: str
+    value: str
+    lineno: int
+
+
+_rules: list[tuple[str | None, re.Pattern[str]]] = [
     (None, re.compile(r'\s+', re.UNICODE)),
     (None, re.compile(r'<!--.*')),
     ('linecomment', re.compile(r'//.*')),
@@ -55,7 +62,7 @@ _rules = [
 ]
 
 
-def get_rules(jsx, dotted, template_string):
+def get_rules(jsx: bool, dotted: bool, template_string: bool) -> list[tuple[str | None, re.Pattern[str]]]:
     """
     Get a tokenization rule list given the passed syntax options.
 
@@ -75,7 +82,7 @@ def get_rules(jsx, dotted, template_string):
     return rules
 
 
-def indicates_division(token):
+def indicates_division(token: Token) -> bool:
     """A helper function that helps the tokenizer to decide if the current
     token may be followed by a division operator.
     """
@@ -84,7 +91,7 @@ def indicates_division(token):
     return token.type in ('name', 'number', 'string', 'regexp')
 
 
-def unquote_string(string):
+def unquote_string(string: str) -> str:
     """Unquote a string with JavaScript rules.  The string has to start with
     string delimiters (``'``, ``"`` or the back-tick/grave accent (for template strings).)
     """
@@ -95,7 +102,7 @@ def unquote_string(string):
     add = result.append
     pos = 0
 
-    while 1:
+    while True:
         # scan for the next escape
         escape_pos = string.find('\\', pos)
         if escape_pos < 0:
@@ -148,26 +155,26 @@ def unquote_string(string):
     if pos < len(string):
         add(string[pos:])
 
-    return u''.join(result)
+    return ''.join(result)
 
 
-def tokenize(source, jsx=True, dotted=True, template_string=True):
+def tokenize(source: str, jsx: bool = True, dotted: bool = True, template_string: bool = True, lineno: int = 1) -> Generator[Token, None, None]:
     """
     Tokenize JavaScript/JSX source.  Returns a generator of tokens.
 
     :param jsx: Enable (limited) JSX parsing.
     :param dotted: Read dotted names as single name token.
     :param template_string: Support ES6 template strings
+    :param lineno: starting line number (optional)
     """
     may_divide = False
     pos = 0
-    lineno = 1
     end = len(source)
     rules = get_rules(jsx=jsx, dotted=dotted, template_string=template_string)
 
     while pos < end:
         # handle regular rules first
-        for token_type, rule in rules:
+        for token_type, rule in rules:  # noqa: B007
             match = rule.match(source, pos)
             if match is not None:
                 break

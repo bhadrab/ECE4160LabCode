@@ -4,21 +4,25 @@
 
     Writing of files in the ``gettext`` MO (machine object) format.
 
-    :copyright: (c) 2013-2022 by the Babel Team.
+    :copyright: (c) 2013-2023 by the Babel Team.
     :license: BSD, see LICENSE for more details.
 """
+from __future__ import annotations
 
 import array
 import struct
+from typing import TYPE_CHECKING
 
 from babel.messages.catalog import Catalog, Message
 
+if TYPE_CHECKING:
+    from _typeshed import SupportsRead, SupportsWrite
 
-LE_MAGIC = 0x950412de
-BE_MAGIC = 0xde120495
+LE_MAGIC: int = 0x950412de
+BE_MAGIC: int = 0xde120495
 
 
-def read_mo(fileobj):
+def read_mo(fileobj: SupportsRead[bytes]) -> Catalog:
     """Read a binary MO file from the given file-like object and return a
     corresponding `Catalog` object.
 
@@ -51,7 +55,7 @@ def read_mo(fileobj):
 
     # Now put all messages from the .mo file buffer into the catalog
     # dictionary
-    for i in range(0, msgcount):
+    for _i in range(msgcount):
         mlen, moff = unpack(ii, buf[origidx:origidx + 8])
         mend = moff + mlen
         tlen, toff = unpack(ii, buf[transidx:transidx + 8])
@@ -102,7 +106,7 @@ def read_mo(fileobj):
     return catalog
 
 
-def write_mo(fileobj, catalog, use_fuzzy=False):
+def write_mo(fileobj: SupportsWrite[bytes], catalog: Catalog, use_fuzzy: bool = False) -> None:
     """Write a catalog to the specified file-like object using the GNU MO file
     format.
 

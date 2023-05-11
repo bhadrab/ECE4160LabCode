@@ -12,12 +12,26 @@
        access to various locale display names, localized number and date
        formatting, etc.
 
-    :copyright: (c) 2013-2022 by the Babel Team.
+    :copyright: (c) 2013-2023 by the Babel Team.
     :license: BSD, see LICENSE for more details.
 """
 
-from babel.core import UnknownLocaleError, Locale, default_locale, \
-    negotiate_locale, parse_locale, get_locale_identifier
+from babel.core import (
+    Locale,
+    UnknownLocaleError,
+    default_locale,
+    get_locale_identifier,
+    negotiate_locale,
+    parse_locale,
+)
 
+__version__ = '2.12.1'
 
-__version__ = '2.11.0'
+__all__ = [
+    'Locale',
+    'UnknownLocaleError',
+    'default_locale',
+    'get_locale_identifier',
+    'negotiate_locale',
+    'parse_locale',
+]

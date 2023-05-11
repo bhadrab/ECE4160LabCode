@@ -10,16 +10,25 @@
      * ``LC_ALL``, and
      * ``LANG``
 
-    :copyright: (c) 2015-2022 by the Babel Team.
+    :copyright: (c) 2015-2023 by the Babel Team.
     :license: BSD, see LICENSE for more details.
 """
+from __future__ import annotations
+
+from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
 from babel.core import Locale, default_locale
+
+if TYPE_CHECKING:
+    from typing_extensions import Literal
 
 DEFAULT_LOCALE = default_locale()
 
 
-def format_list(lst, style='standard', locale=DEFAULT_LOCALE):
+def format_list(lst: Sequence[str],
+                style: Literal['standard', 'standard-short', 'or', 'or-short', 'unit', 'unit-short', 'unit-narrow'] = 'standard',
+                locale: Locale | str | None = DEFAULT_LOCALE) -> str:
     """
     Format the items in `lst` as a list.
 
@@ -68,11 +77,10 @@ def format_list(lst, style='standard', locale=DEFAULT_LOCALE):
         return lst[0]
 
     if style not in locale.list_patterns:
-        raise ValueError('Locale %s does not support list formatting style %r (supported are %s)' % (
-            locale,
-            style,
-            list(sorted(locale.list_patterns)),
-        ))
+        raise ValueError(
+            f'Locale {locale} does not support list formatting style {style!r} '
+            f'(supported are {sorted(locale.list_patterns)})'
+        )
     patterns = locale.list_patterns[style]
 
     if len(lst) == 2:

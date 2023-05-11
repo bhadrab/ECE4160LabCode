@@ -1,13 +1,25 @@
+from __future__ import annotations
+
+import decimal
+from typing import TYPE_CHECKING
+
 from babel.core import Locale
-from babel.numbers import format_decimal, LC_NUMERIC
+from babel.numbers import LC_NUMERIC, format_decimal
+
+if TYPE_CHECKING:
+    from typing_extensions import Literal
 
 
 class UnknownUnitError(ValueError):
-    def __init__(self, unit, locale):
-        ValueError.__init__(self, "%s is not a known unit in %s" % (unit, locale))
+    def __init__(self, unit: str, locale: Locale) -> None:
+        ValueError.__init__(self, f"{unit} is not a known unit in {locale}")
 
 
-def get_unit_name(measurement_unit, length='long', locale=LC_NUMERIC):
+def get_unit_name(
+    measurement_unit: str,
+    length: Literal['short', 'long', 'narrow'] = 'long',
+    locale: Locale | str | None = LC_NUMERIC,
+) -> str | None:
     """
     Get the display name for a measurement unit in the given locale.
 
@@ -36,7 +48,7 @@ def get_unit_name(measurement_unit, length='long', locale=LC_NUMERIC):
     return locale.unit_display_names.get(unit, {}).get(length)
 
 
-def _find_unit_pattern(unit_id, locale=LC_NUMERIC):
+def _find_unit_pattern(unit_id: str, locale: Locale | str | None = LC_NUMERIC) -> str | None:
     """
     Expand an unit into a qualified form.
 
@@ -62,7 +74,13 @@ def _find_unit_pattern(unit_id, locale=LC_NUMERIC):
             return unit_pattern
 
 
-def format_unit(value, measurement_unit, length='long', format=None, locale=LC_NUMERIC):
+def format_unit(
+    value: float | decimal.Decimal,
+    measurement_unit: str,
+    length: Literal['short', 'long', 'narrow'] = 'long',
+    format: str | None = None,
+    locale: Locale | str | None = LC_NUMERIC,
+) -> str:
     """Format a value of a given unit.
 
     Values are formatted according to the locale's usual pluralization rules
@@ -128,13 +146,15 @@ def format_unit(value, measurement_unit, length='long', format=None, locale=LC_N
 
     # Fall back to a somewhat bad representation.
     # nb: This is marked as no-cover, as the current CLDR seemingly has no way for this to happen.
-    return '%s %s' % (  # pragma: no cover
-        formatted_value,
-        (get_unit_name(measurement_unit, length=length, locale=locale) or measurement_unit)
-    )
+    fallback_name = get_unit_name(measurement_unit, length=length, locale=locale)  # pragma: no cover
+    return f"{formatted_value} {fallback_name or measurement_unit}"  # pragma: no cover
 
 
-def _find_compound_unit(numerator_unit, denominator_unit, locale=LC_NUMERIC):
+def _find_compound_unit(
+    numerator_unit: str,
+    denominator_unit: str,
+    locale: Locale | str | None = LC_NUMERIC,
+) -> str | None:
     """
     Find a predefined compound unit pattern.
 
@@ -179,14 +199,18 @@ def _find_compound_unit(numerator_unit, denominator_unit, locale=LC_NUMERIC):
 
     # Now we can try and rebuild a compound unit specifier, then qualify it:
 
-    return _find_unit_pattern("%s-per-%s" % (bare_numerator_unit, bare_denominator_unit), locale=locale)
+    return _find_unit_pattern(f"{bare_numerator_unit}-per-{bare_denominator_unit}", locale=locale)
 
 
 def format_compound_unit(
-    numerator_value, numerator_unit=None,
-    denominator_value=1, denominator_unit=None,
-    length='long', format=None, locale=LC_NUMERIC
-):
+    numerator_value: float | decimal.Decimal,
+    numerator_unit: str | None = None,
+    denominator_value: float | decimal.Decimal = 1,
+    denominator_unit: str | None = None,
+    length: Literal["short", "long", "narrow"] = "long",
+    format: str | None = None,
+    locale: Locale | str | None = LC_NUMERIC,
+) -> str | None:
     """
     Format a compound number value, i.e. "kilometers per hour" or similar.
 
