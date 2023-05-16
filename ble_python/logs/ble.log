@@ -275,3 +275,319 @@
 2023-05-08 17:47:24,711 | MainThread   | [CRITICAL] | <module>            |: critical
 2023-05-08 17:47:24,713 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
 2023-05-08 17:47:30,086 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 18:21:41,300 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 18:21:41,302 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 18:21:41,303 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 18:21:41,308 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 18:21:41,310 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 18:21:41,323 | MainThread   | [DEBUG   ] | __init__            |: Python Info: sys.version_info(major=3, minor=10, micro=10, releaselevel='final', serial=0)
+2023-05-12 18:21:41,323 | MainThread   | [DEBUG   ] | __init__            |: System Info: Windows-10-10.0.19045-SP0
+2023-05-12 18:21:41,324 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 18:21:46,899 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 18:23:08,831 | MainThread   | [INFO    ] | exit_handler        |: Exiting...
+2023-05-12 18:23:08,942 | MainThread   | [WARNING ] | exit_handler        |: Could not disconnect before exiting
+2023-05-12 18:23:08,948 | MainThread   | [WARNING ] | exit_handler        |: Event loop stopped before Future completed.
+2023-05-12 18:23:09,109 | MainThread   | [WARNING ] | __del__             |: Could not delete BaseBLEController instance before exiting
+2023-05-12 18:23:09,302 | MainThread   | [WARNING ] | __del__             |: [WinError 10038] An operation was attempted on something that is not a socket
+2023-05-12 18:23:30,968 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 18:23:30,968 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 18:23:30,968 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 18:23:30,976 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 18:23:30,978 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 18:23:30,987 | MainThread   | [DEBUG   ] | __init__            |: Python Info: sys.version_info(major=3, minor=10, micro=10, releaselevel='final', serial=0)
+2023-05-12 18:23:30,988 | MainThread   | [DEBUG   ] | __init__            |: System Info: Windows-10-10.0.19045-SP0
+2023-05-12 18:23:30,989 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 18:23:35,134 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 18:26:05,374 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44
+2023-05-12 19:31:23,044 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 19:31:23,044 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 19:31:23,044 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 19:31:23,044 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 19:31:23,050 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 19:31:23,054 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 19:31:27,118 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 19:35:38,637 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44
+2023-05-12 19:37:04,073 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 19:37:04,073 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 19:37:04,099 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 19:37:04,101 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 19:37:04,103 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 19:37:04,108 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 19:37:08,640 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 19:37:15,200 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44
+2023-05-12 20:27:30,649 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 20:27:30,650 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 20:27:30,652 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 20:27:30,652 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 20:27:30,652 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 20:27:30,660 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 20:27:34,453 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 20:30:27,206 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44
+2023-05-12 20:30:59,303 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 20:30:59,303 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 20:30:59,325 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 20:30:59,326 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 20:30:59,328 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 20:30:59,332 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 20:31:04,288 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 20:33:30,694 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44
+2023-05-12 20:33:43,039 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 20:33:43,039 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 20:33:43,040 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 20:33:43,041 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 20:33:43,043 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 20:33:43,054 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 20:33:46,127 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 20:43:40,241 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44
+2023-05-12 20:43:53,388 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 20:43:53,389 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 20:43:53,390 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 20:43:53,390 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 20:43:53,392 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 20:43:53,396 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 20:44:03,438 | MainThread   | [ERROR   ] | _connect            |: Device with address c0:07:1d:96:09:44 was not found.
+2023-05-12 20:44:04,467 | MainThread   | [WARNING ] | connect             |: Attempting to connect again...
+2023-05-12 20:44:04,472 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 20:44:14,372 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 20:44:56,779 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44
+2023-05-12 20:48:20,743 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 20:48:20,745 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 20:48:20,746 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 20:48:20,747 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 20:48:20,749 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 20:48:20,753 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 20:48:26,447 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 20:50:53,739 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44
+2023-05-12 20:51:39,078 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 20:51:39,078 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 20:51:39,080 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 20:51:39,082 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 20:51:39,083 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 20:51:39,087 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 20:51:43,478 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 20:53:49,783 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44
+2023-05-12 20:53:59,450 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 20:53:59,451 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 20:53:59,452 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 20:53:59,453 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 20:53:59,455 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 20:53:59,459 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 20:54:04,535 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 20:58:45,809 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44
+2023-05-12 20:59:38,995 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 20:59:38,996 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 20:59:38,997 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 20:59:38,999 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 20:59:39,003 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 20:59:39,009 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 20:59:44,376 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 21:00:37,881 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44
+2023-05-12 21:02:15,007 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 21:02:15,010 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 21:02:15,011 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 21:02:15,012 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 21:02:15,015 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 21:02:15,021 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 21:02:18,234 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 21:02:59,933 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44
+2023-05-12 21:03:36,838 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 21:03:36,838 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 21:03:36,842 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 21:03:36,843 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 21:03:36,846 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 21:03:36,851 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 21:03:42,038 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 21:04:53,192 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44
+2023-05-12 21:06:09,684 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 21:06:09,685 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 21:06:09,688 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 21:06:09,690 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 21:06:09,692 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 21:06:09,698 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 21:06:14,852 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 21:08:02,917 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44
+2023-05-12 21:08:14,989 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 21:08:14,989 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 21:08:14,990 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 21:08:14,993 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 21:08:14,994 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 21:08:15,001 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 21:08:19,422 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 21:09:59,910 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44
+2023-05-12 21:11:07,980 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 21:11:07,981 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 21:11:07,983 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 21:11:07,988 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 21:11:07,991 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 21:11:07,998 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 21:11:11,681 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 21:16:13,796 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 21:16:13,796 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 21:16:13,799 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 21:16:13,801 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 21:16:13,803 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 21:16:13,811 | MainThread   | [INFO    ] | _connect            |: Already connected to a BLE device
+2023-05-12 21:16:14,838 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44
+2023-05-12 21:17:29,291 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 21:17:29,293 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 21:17:29,294 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 21:17:29,297 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 21:17:29,300 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 21:17:29,306 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 21:17:32,683 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 21:17:38,464 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 21:17:38,465 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 21:17:38,467 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 21:17:38,469 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 21:17:38,473 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 21:17:38,480 | MainThread   | [INFO    ] | _connect            |: Already connected to a BLE device
+2023-05-12 21:17:42,572 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44
+2023-05-12 21:18:24,823 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 21:18:24,825 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 21:18:24,827 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 21:18:24,830 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 21:18:24,832 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 21:18:24,840 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 21:18:28,175 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 21:19:40,145 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44
+2023-05-12 21:30:07,234 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 21:30:07,235 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 21:30:07,238 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 21:30:07,242 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 21:30:07,245 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 21:30:07,251 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 21:30:17,289 | MainThread   | [ERROR   ] | _connect            |: Device with address c0:07:1d:96:09:44 was not found.
+2023-05-12 21:30:18,307 | MainThread   | [WARNING ] | connect             |: Attempting to connect again...
+2023-05-12 21:30:18,312 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 21:30:28,358 | MainThread   | [ERROR   ] | _connect            |: Device with address c0:07:1d:96:09:44 was not found.
+2023-05-12 21:30:29,369 | MainThread   | [WARNING ] | connect             |: Attempting to connect again...
+2023-05-12 21:30:29,371 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 21:30:34,717 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 21:32:12,420 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44
+2023-05-12 21:32:39,065 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 21:32:39,066 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 21:32:39,069 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 21:32:39,071 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 21:32:39,074 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 21:32:39,078 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 21:32:43,295 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 21:33:11,108 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44
+2023-05-12 21:37:03,027 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 21:37:03,028 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 21:37:03,031 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 21:37:03,033 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 21:37:03,033 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 21:37:03,041 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 21:37:13,058 | MainThread   | [ERROR   ] | _connect            |: Device with address c0:07:1d:96:09:44 was not found.
+2023-05-12 21:37:14,091 | MainThread   | [WARNING ] | connect             |: Attempting to connect again...
+2023-05-12 21:37:14,093 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 21:37:24,159 | MainThread   | [ERROR   ] | _connect            |: Device with address c0:07:1d:96:09:44 was not found.
+2023-05-12 21:37:25,163 | MainThread   | [WARNING ] | connect             |: Attempting to connect again...
+2023-05-12 21:37:25,165 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 21:37:35,220 | MainThread   | [ERROR   ] | _connect            |: Device with address c0:07:1d:96:09:44 was not found.
+2023-05-12 21:37:36,221 | MainThread   | [WARNING ] | connect             |: Attempting to connect again...
+2023-05-12 21:37:44,932 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 21:37:44,933 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 21:37:44,935 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 21:37:44,937 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 21:37:44,939 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 21:37:44,945 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 21:37:54,983 | MainThread   | [ERROR   ] | _connect            |: Device with address c0:07:1d:96:09:44 was not found.
+2023-05-12 21:37:56,002 | MainThread   | [WARNING ] | connect             |: Attempting to connect again...
+2023-05-12 21:37:56,002 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 21:38:05,921 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 21:41:30,842 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44
+2023-05-12 22:08:39,773 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 22:08:39,778 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 22:08:39,779 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 22:08:39,780 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 22:08:39,781 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 22:08:39,785 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 22:08:45,474 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 22:14:50,216 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44
+2023-05-12 22:16:36,769 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 22:16:36,769 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 22:16:36,771 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 22:16:36,774 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 22:16:36,776 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 22:16:36,779 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 22:16:40,157 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 22:19:23,417 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44
+2023-05-12 22:20:06,380 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 22:20:06,381 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 22:20:06,382 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 22:20:06,383 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 22:20:06,385 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 22:20:06,390 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 22:20:09,486 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 22:21:27,078 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44
+2023-05-12 22:22:35,111 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 22:22:35,111 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 22:22:35,112 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 22:22:35,113 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 22:22:35,114 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 22:22:35,119 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 22:22:38,941 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 22:25:18,217 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44
+2023-05-12 22:26:17,728 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 22:26:17,728 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 22:26:17,729 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 22:26:17,729 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 22:26:17,731 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 22:26:17,734 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 22:26:21,253 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 22:29:21,474 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44
+2023-05-12 22:29:34,950 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 22:29:34,950 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 22:29:34,951 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 22:29:34,952 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 22:29:34,953 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 22:29:34,957 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 22:29:38,936 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 22:30:48,409 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 22:30:48,410 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 22:30:48,413 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 22:30:48,414 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 22:30:48,416 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 22:30:48,424 | MainThread   | [INFO    ] | _connect            |: Already connected to a BLE device
+2023-05-12 22:30:50,275 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44
+2023-05-12 22:30:56,577 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 22:30:56,577 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 22:30:56,579 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 22:30:56,581 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 22:30:56,583 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 22:30:56,586 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 22:31:00,612 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 22:33:04,200 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44
+2023-05-12 22:33:19,107 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 22:33:19,107 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 22:33:19,109 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 22:33:19,112 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 22:33:19,113 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 22:33:19,116 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 22:33:28,334 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 22:35:25,378 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44
+2023-05-12 22:36:00,490 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 22:36:00,490 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 22:36:00,492 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 22:36:00,495 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 22:36:00,497 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 22:36:00,500 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 22:36:05,766 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 22:39:47,160 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44
+2023-05-12 22:39:49,714 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 22:39:49,715 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 22:39:49,716 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 22:39:49,717 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 22:39:49,718 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 22:39:49,723 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 22:39:53,645 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 22:40:30,252 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44
+2023-05-12 22:41:02,576 | MainThread   | [DEBUG   ] | <module>            |: debug
+2023-05-12 22:41:02,577 | MainThread   | [INFO    ] | <module>            |: info
+2023-05-12 22:41:02,580 | MainThread   | [WARNING ] | <module>            |: warning
+2023-05-12 22:41:02,581 | MainThread   | [ERROR   ] | <module>            |: error
+2023-05-12 22:41:02,583 | MainThread   | [CRITICAL] | <module>            |: critical
+2023-05-12 22:41:02,586 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:07:1d:96:09:44
+2023-05-12 22:41:06,609 | MainThread   | [INFO    ] | _connect            |: Connected to c0:07:1d:96:09:44
+2023-05-12 22:45:13,389 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from c0:07:1d:96:09:44

@@ -36,11 +36,11 @@ int rightPWM = 0;
 /////////////////Motor Drivers//////////////////////
 
 ////////////////Data Arrays/////////////////////////
-int time_array[1000];
-int TOF_array[1000];
-int PWM_array[1000];
-int xkf_array[1000];
-int angV_array[1000];
+int time_array[600];
+int TOF_array[600];
+int PWM_array[600];
+int xkf_array[600];
+int angV_array[600];
 ////////////////Data Arrays/////////////////////////
 
 
@@ -86,49 +86,9 @@ unsigned long currMillisTOF = 0;
 //////////// Global Variables ////////////
 
 
-/*
 //////////////////// KF Variables /////////////////////
-
-float drag = 1.0 / 1500.0;
-float momentum = 0.0004342944819032519;
-
-
-//A,B,C, I Matrices
-Matrix<2, 2> A_kf = { 0, 1,
-                      0, -drag / momentum };
-Matrix<2, 1> B_kf = { 0,
-                      1 / momentum };
-Matrix<1, 2> C_kf = { -1, 0 };
-Matrix<2, 2> I2 = { 1, 0,
-                    0, 1 };
-//Discretised A B
-Matrix<2, 2> Ad = { 1, 0.054,
-                    0, 0.91710694 };
-Matrix<2, 1> Bd = { 0,
-                    124.33959502 };
-
-//Initialise states
-int sig1 = 39;
-int sig2 = sig1;
-int sig3 = 20;
-Matrix<2, 1> x_kf = { -2967.,
-                      0 };
-Matrix<2, 2> sig = { 10, 0,
-                     0, 10 };
-
-//Define noise covariance matrices
-Matrix<2, 2> sig_u = { sig1 ^ 2, 0,
-                       0, sig2 ^ 2 };
-Matrix<1, 1> sig_z = { sig3 ^ 2 };
-
-
-//////////////////// KF Variables /////////////////////
-*/
-
-//////// KF Variables ////////
-
-float d_val = 1.0 / 1500.0;           // drag
-float m_val = 0.0004342944819032519;  // mass
+float d_val = 1.0 / 1500.0;
+float m_val = 0.0004342944819032519;
 
 // A, B, C matrices
 Matrix<2, 2> A_mat = { 0, 1,
@@ -138,9 +98,9 @@ Matrix<2, 1> B_mat = { 0,
 Matrix<1, 2> C_mat = { -1, 0 };
 
 // Process and measurement noise
-Matrix<2, 2> sig_u = { 40 ^ 2, 0,
-                       0, 40 ^ 2 };
-Matrix<1, 1> sig_z = { 20 ^ 2 };
+Matrix<2, 2> sig_u = { 1500, 0,
+                       0, 1500 };
+Matrix<1, 1> sig_z = { 200 };
 
 // Discretize A & B
 float delta_t = 0.015;
@@ -151,34 +111,22 @@ Matrix<2, 2> A_d = { 1, 0.015,
 Matrix<2, 1> B_d = { 0,
                      26.5957 };
 
+// Matrix<2, 2> A_d = { 1, 0.015,
+//                     0, 0.976975 };
+// Matrix<2, 1> B_d = { 0,
+//                     34.53 };
+
 // Initial states
-Matrix<2, 2> sig = { 2 ^ 2, 0,
-                     0, 2 ^ 2 };  // initial state uncertainty
-Matrix<2, 1> x_val = { -3000,
+Matrix<2, 2> sig = { 25, 0,
+                     0, 25 };  // initial state uncertainty
+Matrix<2, 1> x_val = { -2000,
                        0 };  // initial state output
 
-//////// KF Function ////////
-
-void kf(int distKF) {
-
-  Matrix<2, 1> x_p = A_d * x_val + B_d * PWM;
-  Matrix<2, 2> sig_p = A_d * sig * (~A_d) + sig_u;
-
-  Matrix<1, 1> y_curr = { distKF };
-  Matrix<1, 1> y_m = y_curr - C_mat * x_p;
-  Matrix<1, 1> sig_m = C_mat * sig_p * (~C_mat) + sig_z;
-
-  Matrix<1, 1> sig_m_inv = sig_m;
-  Invert(sig_m_inv);
-
-  Matrix<2, 1> kf_gain = sig_p * (~C_mat) * (sig_m_inv);
-
-  // Update
-  x_val = x_p + kf_gain * y_m;
-  sig = (I_mat - kf_gain * C_mat) * sig_p;
-}
 
 
+
+
+//////////////////// KF Variables /////////////////////
 
 void setup() {
   Wire.begin();
@@ -336,6 +284,7 @@ enum CommandTypes {
   STOP,
   START_PID,
   START_MAP,
+  START_STUNT,
 
 };
 
@@ -596,7 +545,7 @@ void handle_command() {
           if (myICM.dataReady()) {
             myICM.getAGMT();
             angV = myICM.gyrZ();
-          PWM_array[count] = pid_map(angV);
+            PWM_array[count] = pid_map(angV);
           }
           angV_array[count] = angV;
 
@@ -633,6 +582,68 @@ void handle_command() {
       }
       break;
 
+    case START_STUNT:
+      {
+        int distance = 0;
+        PWM = 255;
+
+        analogWrite(motorL1, 0);        
+        analogWrite(motorR1, 0);
+        analogWrite(motorL2, 255);
+        analogWrite(motorR2, 254);     
+
+        while (1) {
+          if (distanceSensor1.checkForDataReady()) {
+            distance = distanceSensor1.getDistance();
+          }
+
+          kf(distance);
+          float currDist = -x_val(0, 0);
+
+          if (currDist <= 750) {
+            break;
+          }
+
+        }
+
+        PWM = -255;        
+
+        
+        analogWrite(motorL1, 255);
+        analogWrite(motorR1, 254);
+        analogWrite(motorL2, 0);        
+        analogWrite(motorR2, 0);
+
+        delay(600);
+
+        
+        analogWrite(motorL1, 0);
+        analogWrite(motorR1, 0);
+        analogWrite(motorL2, 0);
+        analogWrite(motorR2, 0);
+        
+
+        delay(40);
+
+        PWM = -255;
+
+        analogWrite(motorL1, 255);
+        analogWrite(motorR1, 254);
+        analogWrite(motorL2, 0);        
+        analogWrite(motorR2, 0);
+
+        delay(2000);
+
+        analogWrite(motorL2, 0);
+        analogWrite(motorL1, 0);
+        analogWrite(motorR2, 0);
+        analogWrite(motorR1, 0);
+
+
+      }
+      break;
+
+
 
     /* 
          * The default case may not capture all types of invalid commands.
@@ -646,24 +657,7 @@ void handle_command() {
   }
 }
 
-// void kf(int distKF) {
 
-//   Matrix<2, 1> mu_p = Ad * x_kf + Bd * PWM;
-//   Matrix<2, 2> sigma_p = Ad * sig * (~Ad) + sig_u;
-
-//   Matrix<1, 1> sigma_m = C_kf * sigma_p * (~C_kf) + sig_z;
-
-//   Matrix<1, 1> sigma_m_inv = sigma_m;
-//   Invert(sigma_m_inv);
-//   Matrix<2, 1> kkf_gain = sigma_p * (~C_kf) * (sigma_m_inv);
-
-//   Matrix<1, 1> y_kf = { distKF };
-//   Matrix<1, 1> y_m = y_kf - C_kf * mu_p;
-
-
-//   x_kf = mu_p + kkf_gain * y_m;
-//   sig = (I2 - kkf_gain * C_kf) * sigma_p;
-// }
 
 int PID(int dist) {
   kf(dist);
@@ -704,8 +698,7 @@ int PID(int dist) {
 }
 
 
-
-int pid_map(float angV){
+int pid_map(float angV) {
   float error = (-1.0 * angV) - 15.0;
   float speed = 85 - (kp * error);
   PWM = speed;
@@ -716,10 +709,26 @@ int pid_map(float angV){
   analogWrite(motorL1, 0);
   analogWrite(motorR2, 0);
   analogWrite(motorR1, PWM);
-  
-
-  
   return speed;
+}
+
+void kf(int dist2) {
+
+  Matrix<2, 1> x_p = A_d * x_val + B_d * PWM;
+  Matrix<2, 2> sig_p = A_d * sig * (~A_d) + sig_u;
+
+  Matrix<1, 1> y_curr = { dist2 };
+  Matrix<1, 1> y_m = y_curr - C_mat * x_p;
+  Matrix<1, 1> sig_m = C_mat * sig_p * (~C_mat) + sig_z;
+
+  Matrix<1, 1> sig_m_inv = sig_m;
+  Invert(sig_m_inv);
+
+  Matrix<2, 1> kf_gain = sig_p * (~C_mat) * (sig_m_inv);
+
+  // Update
+  x_val = x_p + kf_gain * y_m;
+  sig = (I_mat - kf_gain * C_mat) * sig_p;
 }
 
 
@@ -847,46 +856,3 @@ void printScaledAGMT(ICM_20948_AGMT_t agmt) {
 }
 
 ////////IMU HELPER FUNCTIONS//////////////////////////
-
-
-/*
-void PID_control(int dist) {
-  int current_distance = dist;
-  float error = current_distance - target_distance;
-  float proportional = KP * error;
-
-  PWM = proportional;
-
-  // if (PWM < range && PWM > -range) {
-  //   PWM = 0;
-  //   analogWrite(motorL2, 0);
-  //   analogWrite(motorL1, 0);
-  //   analogWrite(motorR2, 0);
-  //   analogWrite(motorR1, 0);
-  //   ;
-  // } else
-  PWM = min(PWM, 255);
-  PWM = max(PWM, 50);
-  if (PWM < 0) {
-    // PWM = min(PWM, 255);
-    // PWM = min(PWM, 40);
-    analogWrite(motorL2, 0);
-    analogWrite(motorL1, PWM);
-    analogWrite(motorR2, 0);
-    analogWrite(motorR1, PWM);
-  } else if (PWM > 0) {
-    // PWM = min(PWM, 255);
-    // PWM = min(PWM, 40);
-    analogWrite(motorL2, PWM);
-    analogWrite(motorL1, 0);
-    analogWrite(motorR2, PWM);
-    analogWrite(motorR1, 0);
-
-  } else {
-    analogWrite(motorL2, 0);
-    analogWrite(motorL1, 0);
-    analogWrite(motorR2, 0);
-    analogWrite(motorR1, 0);
-  }
-}
-*/

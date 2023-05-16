@@ -9,3 +9,4 @@ class CMD(Enum):
     STOP = 5
     START_PID = 6
     START_MAP = 7
+    START_STUNT = 8
