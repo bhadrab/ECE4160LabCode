@@ -1,4 +1,5 @@
 from enum import Enum
+# For git
 
 class CMD(Enum):
     PING = 0
