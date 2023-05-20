@@ -9,9 +9,7 @@
 #include <BasicLinearAlgebra.h>
 using namespace BLA;
 
-int PWM = 0;
-int targetDist = 100;
-float kp = 0.03;
+
 
 #define SERIAL_PORT Serial
 #define AD0_VAL 1  // The value of the last bit of the I2C address, on the SparkFun 9DoF IMU breakout the default is 1
@@ -19,11 +17,9 @@ float kp = 0.03;
 
 ICM_20948_I2C myICM;
 
-#define SHUTDOWN_PIN 8
 
 SFEVL53L1X distanceSensor1;
 
-SFEVL53L1X distanceSensor2(Wire, SHUTDOWN_PIN);
 
 
 /////////////////Motor Drivers//////////////////////
@@ -31,8 +27,6 @@ SFEVL53L1X distanceSensor2(Wire, SHUTDOWN_PIN);
 #define motorL2 A2
 #define motorR1 4
 #define motorR2 A5
-int leftPWM = 0;
-int rightPWM = 0;
 /////////////////Motor Drivers//////////////////////
 
 ////////////////Data Arrays/////////////////////////
@@ -46,13 +40,10 @@ int angV_array[600];
 
 //////////// BLE UUIDs ////////////
 #define BLE_UUID_TEST_SERVICE "c1135480-10fc-47dc-8021-8d6f8c21a39c"
-
 #define BLE_UUID_RX_STRING "9750f60b-9c9c-4158-b620-02ec9521cd99"
-
 #define BLE_UUID_TX_FLOAT "27616294-3063-4ecc-b60b-3470ddef2938"
 #define BLE_UUID_TX_STRING "f235a225-6735-4d73-94cb-ee5dfce9ba83"
 #define BLE_UUID_TX_STRING2 "6ffc30b7-807f-42e0-994c-4c209f85e9e2"
-#define BLE_UUID_TX_MOTORPWM "2b9fa4e1-dd62-49d6-97c7-0799ef7b1188"
 //////////// BLE UUIDs ////////////
 
 //////////// Global Variables ////////////
@@ -63,7 +54,6 @@ BLECStringCharacteristic rx_characteristic_string(BLE_UUID_RX_STRING, BLEWrite, 
 BLEFloatCharacteristic tx_characteristic_float(BLE_UUID_TX_FLOAT, BLERead | BLENotify);
 BLECStringCharacteristic tx_characteristic_string(BLE_UUID_TX_STRING, BLERead | BLENotify, MAX_MSG_SIZE);
 BLECStringCharacteristic tx_characteristic_string2(BLE_UUID_TX_STRING2, BLERead | BLENotify, MAX_MSG_SIZE);
-BLECStringCharacteristic tx_characteristic_motorPWM(BLE_UUID_TX_STRING2, BLERead | BLENotify, MAX_MSG_SIZE);
 
 // RX
 RobotCommand robot_cmd(":|");
@@ -81,52 +71,15 @@ unsigned long currentMillis = 0;
 static long prevMillis = 0;
 unsigned long currMillis = 0;
 
-static long prevMillisTOF = 0;
-unsigned long currMillisTOF = 0;
+static long prevMillisIMU = 0;
+unsigned long currMillisIMU = 0;
+
+static long prev_time = 0;
+unsigned long curr_time = 0;
+
 //////////// Global Variables ////////////
 
 
-//////////////////// KF Variables /////////////////////
-float d_val = 1.0 / 1500.0;
-float m_val = 0.0004342944819032519;
-
-// A, B, C matrices
-Matrix<2, 2> A_mat = { 0, 1,
-                       0, -d_val / m_val };
-Matrix<2, 1> B_mat = { 0,
-                       1 / m_val };
-Matrix<1, 2> C_mat = { -1, 0 };
-
-// Process and measurement noise
-Matrix<2, 2> sig_u = { 1500, 0,
-                       0, 1500 };
-Matrix<1, 1> sig_z = { 200 };
-
-// Discretize A & B
-float delta_t = 0.015;
-Matrix<2, 2> I_mat = { 1, 0,
-                       0, 1 };
-Matrix<2, 2> A_d = { 1, 0.015,
-                     0, 0.9867 };
-Matrix<2, 1> B_d = { 0,
-                     26.5957 };
-
-// Matrix<2, 2> A_d = { 1, 0.015,
-//                     0, 0.976975 };
-// Matrix<2, 1> B_d = { 0,
-//                     34.53 };
-
-// Initial states
-Matrix<2, 2> sig = { 25, 0,
-                     0, 25 };  // initial state uncertainty
-Matrix<2, 1> x_val = { -2000,
-                       0 };  // initial state output
-
-
-
-
-
-//////////////////// KF Variables /////////////////////
 
 void setup() {
   Wire.begin();
@@ -159,8 +112,6 @@ void setup() {
 
 
   //////////////////////////TOF////////////////////////////////////////
-  pinMode(SHUTDOWN_PIN, OUTPUT);
-  digitalWrite(SHUTDOWN_PIN, LOW);
 
   if (distanceSensor1.begin() != 0)  //Begin returns 0 on a good init
   {
@@ -169,22 +120,8 @@ void setup() {
       ;
   }
   Serial.println("Sensor 1 online!");
-  distanceSensor1.setI2CAddress(0x02);
-  Serial.println(distanceSensor1.getI2CAddress());
-
-  digitalWrite(SHUTDOWN_PIN, HIGH);
-
-  // if (distanceSensor2.begin() != 0)  //Begin returns 0 on a good init
-  // {
-  //   Serial.println("Sensor 2 failed to begin. Please check wiring. Freezing...");
-  //   while (1)
-  //     ;
-  // }
-  // Serial.println("Sensor 2 online!");
 
   distanceSensor1.setDistanceModeLong();
-  // distanceSensor2.setDistanceModeShort();
-
 
   distanceSensor1.startRanging();
 
@@ -203,7 +140,6 @@ void setup() {
   testService.addCharacteristic(tx_characteristic_float);
   testService.addCharacteristic(tx_characteristic_string);
   testService.addCharacteristic(tx_characteristic_string2);
-  testService.addCharacteristic(tx_characteristic_motorPWM);
   testService.addCharacteristic(rx_characteristic_string);
 
   // Add BLE service
@@ -264,10 +200,7 @@ void loop() {
       // Read data
       read_data();
     }
-    analogWrite(motorL2, 0);
-    analogWrite(motorL1, 0);
-    analogWrite(motorR2, 0);
-    analogWrite(motorR1, 0);
+    stop();
 
     Serial.println("Disconnected");
   }
@@ -278,13 +211,11 @@ void loop() {
 enum CommandTypes {
   PING,
   SEND_TWO_INTS,
-  GET_TOF_5s,
-  GET_TOF_IMU,
   START,
   STOP,
-  START_PID,
-  START_MAP,
-  START_STUNT,
+  GO_FORWARD,
+  TURN_CW,
+  TURN_CCW
 
 };
 
@@ -346,302 +277,99 @@ void handle_command() {
       break;
 
 
-
-    case GET_TOF_5s:
-      prevMillisTOF = millis();
-      currMillisTOF = prevMillisTOF;
-
-      analogWrite(motorL2, 105);
-      analogWrite(motorL1, 0);
-      analogWrite(motorR2, 106);
-      analogWrite(motorR1, 0);
-
-      while (currMillisTOF - prevMillisTOF <= 7000) {
-
-        tx_estring_value.clear();
-        tx_estring_value.append("T:");
-        tx_estring_value.append((int)millis());
-
-        if (distanceSensor1.checkForDataReady()) {
-          int distance1 = distanceSensor1.getDistance();
-          tx_estring_value.append("|D1:");
-          tx_estring_value.append(distance1);
-        }
-
-        tx_characteristic_string.writeValue(tx_estring_value.c_str());
-        Serial.print("Sent back: ");
-        Serial.println(tx_estring_value.c_str());
-        currMillisTOF = millis();
-      }
-      analogWrite(motorL2, 0);
-      analogWrite(motorL1, 0);
-      analogWrite(motorR2, 0);
-      analogWrite(motorR1, 0);
-
-      break;
-
-    case GET_TOF_IMU:
-      {
-        prevMillisTOF = millis();
-        currMillisTOF = prevMillisTOF;
-        float pitch_a = 0, roll_a = 0, pitch_g = 0, roll_g = 0, dt = 0, pitch = 0, roll = 0, comp_roll = 0, comp_pitch = 0;
-        unsigned long last_time = millis();
-        double pitch_a_LPF[] = { 0, 0 };
-        double roll_a_LPF[] = { 0, 0 };
-        const int n = 1;
-
-        int TOFtimes[60];
-        int IMUtimes[60];
-        int pitchA[60];
-        int rollA[60];
-        int distance1A[60];
-        int distance2A[60];
-        int leftPWMA[60];
-        int rightPWMA[60];
-
-        int i = 0;
-        int j = 0;
-
-
-        while (currMillisTOF - prevMillisTOF <= 5000) {
-
-          if (myICM.dataReady()) {
-            myICM.getAGMT();  // The values are only updated when you call 'getAGMT'
-
-            dt = (micros() - last_time) / 1000000;
-            last_time = micros();
-            pitch_g = pitch_g + myICM.gyrY() * dt;
-            roll_g = roll_g + myICM.gyrX() * dt;
-            const float alpha = 0.2;
-            pitch_a = -atan2(myICM.accX(), myICM.accZ()) * 180 / M_PI;
-            roll_a = atan2(myICM.accY(), myICM.accZ()) * 180 / M_PI;
-            pitch_a_LPF[n] = alpha * pitch_a + (1 - alpha) * pitch_a_LPF[n - 1];
-            pitch_a_LPF[n - 1] = pitch_a_LPF[n];
-            roll_a_LPF[n] = alpha * roll_a + (1 - alpha) * roll_a_LPF[n - 1];
-            roll_a_LPF[n - 1] = roll_a_LPF[n];
-
-            comp_pitch = (comp_pitch - myICM.gyrY() * dt) * 0.9 + pitch_a_LPF[n] * 0.1;
-            comp_roll = (comp_roll - myICM.gyrZ() * dt) * 0.9 + roll_a_LPF[n] * 0.1;
-            if (i <= 60) {
-              IMUtimes[i] = (int)millis();
-              pitchA[i] = comp_pitch;
-              rollA[i] = comp_roll;
-              i++;
-            }
-          }
-
-          int distance1;
-          if (distanceSensor1.checkForDataReady()) {
-            distance1 = distanceSensor1.getDistance();
-            Serial.print("\tDistance 1(mm): ");
-            Serial.print(distance1);
-          }
-          if (j <= 60) {
-            TOFtimes[i] = (int)millis();
-            distance1A[i] = distance1;
-            j++;
-          }
-
-
-          // Serial.print("Sent back: ");
-          // Serial.println(tx_estring_value.c_str());
-          currMillisTOF = millis();
-        }
-        int k = 0;
-        while (k < i) {
-          tx_estring_value.clear();
-          tx_estring_value.append("T:");
-          tx_estring_value.append(IMUtimes[k]);
-          tx_estring_value.append("|P:");
-          tx_estring_value.append(pitchA[k]);
-          tx_estring_value.append("|R:");
-          tx_estring_value.append(rollA[k]);
-          tx_characteristic_string.writeValue(tx_estring_value.c_str());
-          k++;
-        }
-        int l = 0;
-        while (l < j) {
-          tx_estring2_value.clear();
-          tx_estring2_value.append("T:");
-          tx_estring2_value.append(TOFtimes[k]);
-          tx_estring2_value.append("|D:");
-          tx_estring2_value.append(distance1A[k]);
-          tx_characteristic_string2.writeValue(tx_estring2_value.c_str());
-          l++;
-        }
-      }
-      break;
-
     case START:
-      analogWrite(motorL2, 80);
-      analogWrite(motorL1, 0);
-      analogWrite(motorR2, 80);
-      analogWrite(motorR1, 0);
+      forward(80);
       break;
 
     case STOP:
-      analogWrite(motorL2, 0);
-      analogWrite(motorL1, 0);
-      analogWrite(motorR2, 0);
-      analogWrite(motorR1, 0);
-
+      stop();
       break;
 
-
-    case START_PID:
+    case GO_FORWARD:
       {
-        prevMillisTOF = millis();
-        currMillisTOF = prevMillisTOF;
-        int count = 0;
-        int distance = 0;
-
-        while (currMillisTOF - prevMillisTOF <= 10000) {
-          time_array[count] = (int)millis();
-
+        stop();
+        int currDist;
+        int forwardDist;
+        success = robot_cmd.get_next_value(forwardDist);
+        if (!success) {
+          return;
+        }
+        prevMillis = millis();
+        currMillis = prevMillis;
+        while (currMillis - prevMillis < 5000) {
           if (distanceSensor1.checkForDataReady()) {
-            Serial.println("got tof");
-            distance = distanceSensor1.getDistance();
-            TOF_array[count] = distance;
+            currDist = distanceSensor1.getDistance();
           }
-          PWM_array[count] = PID(distance);
-          xkf_array[count] = x_val(0, 0);
-          currMillisTOF = millis();
-          count++;
+          pid(currDist, forwardDist);
+          Serial.println(currDist);
+
+          currMillis = millis();
         }
-
-        analogWrite(motorL2, 0);
-        analogWrite(motorL1, 0);
-        analogWrite(motorR2, 0);
-        analogWrite(motorR1, 0);
-
-        for (int i = 0; i < 1000; i++) {
-          tx_estring_value.clear();
-          tx_estring_value.append("T:");
-          tx_estring_value.append(time_array[i]);
-          tx_estring_value.append("|");
-          tx_estring_value.append("D:");
-          tx_estring_value.append(TOF_array[i]);
-          tx_estring_value.append("|");
-          tx_estring_value.append("P:");
-          tx_estring_value.append(PWM_array[i]);
-          tx_estring_value.append("|");
-          tx_estring_value.append("X:");
-          tx_estring_value.append(xkf_array[i]);
-
-          tx_characteristic_string.writeValue(tx_estring_value.c_str());
-        }
+        stop();
       }
       break;
 
-    case START_MAP:
+
+
+    case TURN_CW:
       {
-        prevMillisTOF = millis();
-        currMillisTOF = prevMillisTOF;
-        int count = 0;
-        int distance = 0;
-        float angV = 0;
-        while (currMillisTOF - prevMillisTOF <= 10000) {
-          time_array[count] = (int)millis();
+        stop();
+        float dt = 0;
+        float curr_ang = 0;
+        float err;
+
+        float target_ang1;
+        success = robot_cmd.get_next_value(target_ang1);
+        if (!success) {
+          return;
+        }
+        prevMillisIMU = millis();
+        currMillisIMU = prevMillisIMU;
+        while (currMillisIMU - prevMillisIMU < 5000) {
           if (myICM.dataReady()) {
             myICM.getAGMT();
-            angV = myICM.gyrZ();
-            PWM_array[count] = pid_map(angV);
+            curr_time = millis();
+            dt = curr_time - prev_time;
+            prev_time = curr_time;
+            curr_ang = curr_ang + myICM.gyrZ() * dt / 1000;
+            err = target_ang1 - curr_ang;
+
+            float pid_ang = 0.9 * err;
+            pid_ang = speed_adjusted(pid_ang);
+            if (pid_ang > 1.5) {
+              turnCCW(pid_ang);
+            } else if (pid_ang < 1.5) {
+              turnCW(pid_ang);
+            } else {
+              stop();
+            }
           }
-          angV_array[count] = angV;
-
-          if (distanceSensor1.checkForDataReady()) {
-            Serial.println("got tof");
-            distance = distanceSensor1.getDistance();
-            TOF_array[count] = distance;
-          }
-          currMillisTOF = millis();
-          count++;
+          currMillisIMU = millis();
         }
-
-        analogWrite(motorL2, 0);
-        analogWrite(motorL1, 0);
-        analogWrite(motorR2, 0);
-        analogWrite(motorR1, 0);
-
-        for (int i = 0; i < 1000; i++) {
-          tx_estring_value.clear();
-          tx_estring_value.append("T:");
-          tx_estring_value.append(time_array[i]);
-          tx_estring_value.append("|");
-          tx_estring_value.append("D:");
-          tx_estring_value.append(TOF_array[i]);
-          tx_estring_value.append("|");
-          tx_estring_value.append("P:");
-          tx_estring_value.append(PWM_array[i]);
-          tx_estring_value.append("|");
-          tx_estring_value.append("X:");
-          tx_estring_value.append(angV_array[i]);
-
-          tx_characteristic_string.writeValue(tx_estring_value.c_str());
-        }
+        curr_ang = 0;
+        err = 0;
+        stop();
       }
       break;
 
-    case START_STUNT:
+    case TURN_CCW:
       {
-        int distance = 0;
-        PWM = 255;
-
-        analogWrite(motorL1, 0);        
-        analogWrite(motorR1, 0);
-        analogWrite(motorL2, 255);
-        analogWrite(motorR2, 254);     
-
-        while (1) {
-          if (distanceSensor1.checkForDataReady()) {
-            distance = distanceSensor1.getDistance();
-          }
-
-          kf(distance);
-          float currDist = -x_val(0, 0);
-
-          if (currDist <= 750) {
-            break;
-          }
-
+        float turnAngle;
+        success = robot_cmd.get_next_value(turnAngle);
+        if (!success) {
+          return;
         }
-
-        PWM = -255;        
-
-        
-        analogWrite(motorL1, 255);
-        analogWrite(motorR1, 254);
-        analogWrite(motorL2, 0);        
-        analogWrite(motorR2, 0);
-
-        delay(600);
-
-        
-        analogWrite(motorL1, 0);
-        analogWrite(motorR1, 0);
-        analogWrite(motorL2, 0);
-        analogWrite(motorR2, 0);
-        
-
-        delay(40);
-
-        PWM = -255;
-
-        analogWrite(motorL1, 255);
-        analogWrite(motorR1, 254);
-        analogWrite(motorL2, 0);        
-        analogWrite(motorR2, 0);
-
-        delay(2000);
-
-        analogWrite(motorL2, 0);
-        analogWrite(motorL1, 0);
-        analogWrite(motorR2, 0);
-        analogWrite(motorR1, 0);
-
-
+        turnCCW(110);
+        delay(turnAngle);
+        stop();
       }
       break;
+
+
+
+
+
+
 
 
 
@@ -657,21 +385,18 @@ void handle_command() {
   }
 }
 
-
-
-int PID(int dist) {
-  kf(dist);
-  float currDist = -x_val(0, 0);
+int pid(int dist, int targetDist) {
+  int currDist = dist;
   float error = (float)(targetDist - currDist);
-  float speed = kp * error;
+  float speed = 0.04 * error;
   Serial.println(speed);
-  PWM = speed;
+  int PWM = speed;
 
 
   if (PWM < 0) {
     Serial.println("forward");
     PWM = max(PWM, -255);
-    PWM = min(PWM, -50);
+    PWM = min(PWM, -40);
     PWM = -PWM;
     analogWrite(motorL2, PWM);
     analogWrite(motorL1, 0);
@@ -682,53 +407,63 @@ int PID(int dist) {
     Serial.println("backward");
 
     PWM = min(PWM, 255);
-    PWM = max(PWM, 50);
+    PWM = max(PWM, 40);
 
     analogWrite(motorL2, 0);
     analogWrite(motorL1, PWM);
     analogWrite(motorR2, 0);
     analogWrite(motorR1, PWM);
   } else {
-    analogWrite(motorL2, 0);
-    analogWrite(motorL1, 0);
-    analogWrite(motorR2, 0);
-    analogWrite(motorR1, 0);
+    stop();
   }
   return speed;
 }
 
+int speed_adjusted(int PWM) {
+  if (PWM < 0) {
+    PWM = max(PWM, -255);
+    PWM = min(PWM, -90);
+  } else if (PWM > 0) {
+    PWM = min(PWM, 255);
+    PWM = max(PWM, 90);
+  }
+  return PWM;
+}
 
-int pid_map(float angV) {
-  float error = (-1.0 * angV) - 15.0;
-  float speed = 85 - (kp * error);
-  PWM = speed;
-  PWM = min(PWM, 255);
-  PWM = max(PWM, 70);
 
+void forward(int PWM) {
+  analogWrite(motorR2, PWM);
+  analogWrite(motorL2, PWM);
+  analogWrite(motorL1, 0);
+  analogWrite(motorR1, 0);
+}
+
+void backward(int PWM) {
+  analogWrite(motorR1, PWM);
+  analogWrite(motorL1, PWM);
+  analogWrite(motorL2, 0);
+  analogWrite(motorR2, 0);
+}
+
+void turnCCW(int PWM) {
+  analogWrite(motorR2, PWM);
+  analogWrite(motorL1, PWM);
+  analogWrite(motorL2, 0);
+  analogWrite(motorR1, 0);
+}
+
+void turnCW(int PWM) {
+  analogWrite(motorR1, PWM);
   analogWrite(motorL2, PWM);
   analogWrite(motorL1, 0);
   analogWrite(motorR2, 0);
-  analogWrite(motorR1, PWM);
-  return speed;
 }
 
-void kf(int dist2) {
-
-  Matrix<2, 1> x_p = A_d * x_val + B_d * PWM;
-  Matrix<2, 2> sig_p = A_d * sig * (~A_d) + sig_u;
-
-  Matrix<1, 1> y_curr = { dist2 };
-  Matrix<1, 1> y_m = y_curr - C_mat * x_p;
-  Matrix<1, 1> sig_m = C_mat * sig_p * (~C_mat) + sig_z;
-
-  Matrix<1, 1> sig_m_inv = sig_m;
-  Invert(sig_m_inv);
-
-  Matrix<2, 1> kf_gain = sig_p * (~C_mat) * (sig_m_inv);
-
-  // Update
-  x_val = x_p + kf_gain * y_m;
-  sig = (I_mat - kf_gain * C_mat) * sig_p;
+void stop() {
+  analogWrite(motorL2, 0);
+  analogWrite(motorL1, 0);
+  analogWrite(motorR2, 0);
+  analogWrite(motorR1, 0);
 }
 
 

@@ -51,6 +51,7 @@ void loop() {
   double pitch_a_LPF[] = { 0, 0 };
   double roll_a_LPF[] = { 0, 0 };
   const int n = 1;
+  int curr_ang = 0;
 
   while (1) {
     if (myICM.dataReady()) {
@@ -71,6 +72,7 @@ void loop() {
 
       comp_pitch = (comp_pitch - myICM.gyrY()*dt)*0.9 + pitch_a_LPF[n]*0.1;
       comp_roll = (comp_roll - myICM.gyrZ()*dt)*0.9 + roll_a_LPF[n]*0.1;
+      curr_ang = curr_ang + myICM.gyrZ()*dt;
       
       Serial.print("acc:");
       Serial.print(myICM.gyrZ());
